@@ -58,6 +58,7 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Xml;
 import de.shandschuh.sparserss.BASE64;
 import de.shandschuh.sparserss.MainTabActivity;
@@ -152,28 +153,23 @@ public class FetcherService extends IntentService {
 
             if (updates.count > 0) {
 				if (preferences.getBoolean(Strings.SETTINGS_NOTIFICATIONSENABLED, false)) {
-					Cursor cursor = getContentResolver().query(FeedData.EntryColumns.CONTENT_URI, new String[] {COUNT}, new StringBuilder(FeedData.EntryColumns.READDATE).append(Strings.DB_ISNULL).toString(), null, null);
-							
-					cursor.moveToFirst();
-					int newCount = cursor.getInt(0);
-					cursor.close();
+					Cursor cursor = getContentResolver().query(FeedData.EntryColumns.CONTENT_URI, new String[] {COUNT}, FeedData.EntryColumns.READDATE + Strings.DB_ISNULL, null, null);
 
-					String text = new StringBuilder().append(newCount).append(' ').append(getString(R.string.newentries)).toString();
-							
-					Notification notification = new Notification(R.drawable.ic_statusbar_rss, text, System.currentTimeMillis());
-							
+                    int newCount;
+                    if (cursor == null) {
+                        newCount = 0;
+                    } else {
+                        cursor.moveToFirst();
+                        newCount = cursor.getInt(0);
+                        cursor.close();
+                    }
+
+					String text = String.valueOf(newCount) + ' ' + getString(R.string.newentries);
+
 					Intent notificationIntent = new Intent(FetcherService.this, MainTabActivity.class);
 							
 					PendingIntent contentIntent = PendingIntent.getActivity(FetcherService.this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-					if (preferences.getBoolean(Strings.SETTINGS_NOTIFICATIONSVIBRATE, false)) {
-						notification.defaults = Notification.DEFAULT_VIBRATE;
-					} 
-					notification.flags = Notification.FLAG_AUTO_CANCEL | Notification.FLAG_SHOW_LIGHTS;
-					notification.ledARGB = 0xffffffff;
-					notification.ledOnMS = 300;
-					notification.ledOffMS = 1000;
-							
                     StringBuilder ids = new StringBuilder();
                     for( String id : updates.feedIds ) {
                         ids.append(",").append(id);
@@ -189,19 +185,44 @@ public class FetcherService extends IntentService {
                             null, null);
 
                     String ringtone = null;
-                    while( (ringtone == null || ringtone.length() == 0) && ringCursor.moveToNext() ) { // this one has set custom ringtone to silence, check next
-                        ringtone = ringCursor.getString(0);
-                    }
+                    if (ringCursor != null) {
+                        while ((ringtone == null || ringtone.length() == 0) && ringCursor.moveToNext()) { // this one has set custom ringtone to silence, check next
+                            ringtone = ringCursor.getString(0);
+                        }
 
-                    if( (ringtone == null || ringtone.length() == 0) && updates.feedIds.size() != ringCursor.getCount()) { // at least one not overridden but the others were all silence
+                        if ((ringtone == null || ringtone.length() == 0) && updates.feedIds.size() != ringCursor.getCount()) { // at least one not overridden but the others were all silence
+                            ringtone = preferences.getString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, null);
+                        }
+                        ringCursor.close();
+                    }
+                    if (ringtone == null || ! ringtone.isEmpty()) {
                         ringtone = preferences.getString(Strings.SETTINGS_NOTIFICATIONSRINGTONE, null);
                     }
-                    ringCursor.close();
-							
-					if (ringtone != null && ringtone.length() > 0) {
-						notification.sound = Uri.parse(ringtone);
-					}
-					notification.setLatestEventInfo(FetcherService.this, getString(R.string.rss_feeds), text, contentIntent);
+
+                    // Notifications: updating info on existing notifications is deprecated, so instead
+                    // we just send new ones each time.  The notification manager handles preventing
+                    // duplicates of the same event.
+                    Notification notification =
+                            //new Notification(R.drawable.ic_statusbar_rss, text, System.currentTimeMillis());
+                            // notification.setLatestEventInfo(FetcherService.this, getString(R.string.rss_feeds), text, contentIntent);
+                            new NotificationCompat.Builder(FetcherService.this, getString(R.string.rss_feeds))
+                                    .setSmallIcon(R.drawable.ic_statusbar_rss)
+                                    .setTicker(text)
+                                    .setShowWhen(true)
+                                    .setAutoCancel(true)
+                                    .setLights(0xffffffff, 300, 1000)
+                                    .setSound(
+                                            ringtone != null && ! ringtone.isEmpty()
+                                            ? Uri.parse(ringtone)
+                                            : null
+                                    )
+                                    .setDefaults(
+                                            preferences.getBoolean(Strings.SETTINGS_NOTIFICATIONSVIBRATE, false)
+                                                    ? Notification.DEFAULT_VIBRATE
+                                                    : 0
+                                    )
+                                    .setContentIntent(contentIntent)
+                                    .build();
 					notificationManager.notify(0, notification);
 				} else {
 					notificationManager.cancel(0);
