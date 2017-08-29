@@ -71,6 +71,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.R;
 
 public class EntryActivity extends Activity {
 	/*

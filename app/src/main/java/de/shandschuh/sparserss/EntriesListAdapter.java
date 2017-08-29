@@ -46,6 +46,7 @@ import android.widget.ImageView;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
 import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.R;
 
 public class EntriesListAdapter extends ResourceCursorAdapter {
 	private static final int STATE_NEUTRAL = 0;

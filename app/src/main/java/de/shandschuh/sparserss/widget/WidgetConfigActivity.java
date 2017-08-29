@@ -36,7 +36,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.view.View;
 import android.view.View.OnClickListener;
-import de.shandschuh.sparserss.R;
+import net.groboclown.groborss.R;
 import de.shandschuh.sparserss.provider.FeedData;
 
 public class WidgetConfigActivity extends PreferenceActivity {

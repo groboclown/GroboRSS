@@ -31,12 +31,14 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+
+import net.groboclown.groborss.R;
+
 import de.shandschuh.sparserss.service.RefreshService;
 
 public class ApplicationPreferencesActivity extends PreferenceActivity {

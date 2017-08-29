@@ -10,22 +10,17 @@ buildscript {
         // in the individual module build.gradle files
     }
 }
+
+ext {
+    compileSdkVersion = 26
+    buildToolsVersion = "26.0.1"
+}
+
 allprojects {
     repositories {
         jcenter()
+        maven {
+            url "https://maven.google.com"
+        }
     }
-}
-task clean(type: Delete) {
-    delete rootProject.buildDir
-}
-
-android {
-    buildToolsVersion '26.0.1'
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
-    }
-    compileSdkVersion 25
-}
-dependencies {
 }

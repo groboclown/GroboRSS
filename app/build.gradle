@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.1"
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         applicationId "net.groboclown.groborss"
-        minSdkVersion 15
+        minSdkVersion 14
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -16,15 +16,35 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            applicationIdSuffix ".debug"
+        }
     }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    //androidTestCompile('com.android.support.detail_layout.espresso:espresso-core:2.2.2', {
+    //    exclude group: 'com.android.support', module: 'support-annotations'
+    //})
     compile 'com.android.support:appcompat-v7:26.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
+
+    // AndroidJUnitRunner and JUnit Rules
+    androidTestCompile 'com.android.support:appcompat-v7:26.+'
+    androidTestCompile 'com.android.support.test:runner:1.0.0'
+    androidTestCompile 'com.android.support.test:rules:1.0.0'
+
+    // Espresso dependencies
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.0'
+    androidTestCompile 'com.android.support.test.espresso:espresso-contrib:3.0.0'
+    androidTestCompile 'com.android.support.test.espresso:espresso-intents:3.0.0'
+    androidTestCompile 'com.android.support.test.espresso:espresso-accessibility:3.0.0'
+    androidTestCompile 'com.android.support.test.espresso:espresso-web:3.0.0'
+    androidTestCompile 'com.android.support.test.espresso.idling:idling-concurrent:3.0.0'
+
+    // The following Espresso dependency can be either "compile"
+    // or "androidTestCompile", depending on your app's implementation
+    androidTestCompile 'com.android.support.test.espresso:espresso-idling-resource:3.0.0'
 }

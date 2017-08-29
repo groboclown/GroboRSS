@@ -64,6 +64,7 @@ import android.widget.Toast;
 import de.shandschuh.sparserss.provider.FeedData;
 import de.shandschuh.sparserss.provider.OPML;
 import de.shandschuh.sparserss.service.RefreshService;
+import net.groboclown.groborss.R;
 
 public class RSSOverview extends ListActivity {
 	private static final int DIALOG_ERROR_FEEDIMPORT = 3;

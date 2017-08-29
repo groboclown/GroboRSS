@@ -51,6 +51,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.R;
 
 public class EntriesListActivity extends ListActivity {
 	private static final int CONTEXTMENU_MARKASREAD_ID = 6;

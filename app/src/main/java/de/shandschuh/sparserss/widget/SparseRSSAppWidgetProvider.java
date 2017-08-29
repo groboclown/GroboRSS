@@ -38,7 +38,7 @@ import android.graphics.BitmapFactory;
 import android.view.View;
 import android.widget.RemoteViews;
 import de.shandschuh.sparserss.MainTabActivity;
-import de.shandschuh.sparserss.R;
+import net.groboclown.groborss.R;
 import de.shandschuh.sparserss.Strings;
 import de.shandschuh.sparserss.provider.FeedData;
 

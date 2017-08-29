@@ -47,12 +47,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.ScrollView;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 import de.shandschuh.sparserss.provider.FeedData;
 import de.shandschuh.sparserss.service.FetcherService;
+import net.groboclown.groborss.R;
 
 public class MainTabActivity extends TabActivity {
 	private static final int DIALOG_LICENSEAGREEMENT = 0;

@@ -61,7 +61,7 @@ import android.preference.PreferenceManager;
 import android.util.Xml;
 import de.shandschuh.sparserss.BASE64;
 import de.shandschuh.sparserss.MainTabActivity;
-import de.shandschuh.sparserss.R;
+import net.groboclown.groborss.R;
 import de.shandschuh.sparserss.Strings;
 import de.shandschuh.sparserss.handler.RSSHandler;
 import de.shandschuh.sparserss.provider.FeedData;
