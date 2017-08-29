@@ -27,7 +27,7 @@
  
 -->
 <resources>
-    <string name="app_name">Sparse rss</string>
+    <string name="app_name">GroboRSS</string>
     <string name="menu_addfeed">Add feed</string>
     <string name="norssfeeds">No RSS feeds</string>
     <string name="noentries">No entries</string>
@@ -57,7 +57,8 @@
     <string name="menu_share">Share</string>
 
     <!-- For translators: you don't need to translate or include the following string -->
-    <string name="license">Copyright &#169; 2010-2012 Stefan Handschuh (handschuh.stefan@googlemail.com)\n\n
+    <string name="license">Originally Copyright &#169; 2010-2012 Stefan Handschuh (handschuh.stefan@googlemail.com),
+        with a few, minor changes by Groboclown.\n\n
         Translators\n
          - Dutch: Eelko Berkenpies\n
          - Spanish: Sergio Martín\n
@@ -84,7 +85,7 @@
     <string name="contributors_list">Additional contributors (other translations and code):\n\n - a very nice person that wants to be unnamed (French and Turkish translations)\n
         - another nice unnamed person (Japanese translation)\n
         - Joel Low (several patches [refresh spinner, UI adjustments and more]); see commit log for details</string>
-    <string name="license_intro">This software is distributed under the MIT open source license and its source code is available under http://code.google.com/p/sparserss</string>
+    <string name="license_intro">This software is distributed under the MIT open source license and its source code is available under https://github.com/groboclown/GroboRSS (originally http://code.google.com/p/sparserss)</string>
     <string name="contributors"><u>Additional contributors &gt;&gt;</u></string>
     <string name="license_word"><u>&lt;&lt; License</u></string>
 
@@ -248,7 +249,7 @@
     </string-array>
 
     <string name="permission_readfeeds">Read feed data</string>
-    <string name="permission_readfeeds_description">Allows the application to read Sparse RSS feeds and entries.</string>
+    <string name="permission_readfeeds_description">Allows the application to read GroboRSS feeds and entries.</string>
     <string name="permission_writefeeds">Write feed data</string>
-    <string name="permission_writefeeds_description">Allows the application to write Sparse RSS feeds and entries.</string>
+    <string name="permission_writefeeds_description">Allows the application to write GroboRSS feeds and entries.</string>
 </resources>
