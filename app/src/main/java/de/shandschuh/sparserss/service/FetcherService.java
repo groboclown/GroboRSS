@@ -59,6 +59,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.util.Xml;
 import de.shandschuh.sparserss.BASE64;
 import de.shandschuh.sparserss.MainTabActivity;
@@ -68,6 +69,8 @@ import de.shandschuh.sparserss.handler.RSSHandler;
 import de.shandschuh.sparserss.provider.FeedData;
 
 public class FetcherService extends IntentService {
+    private static final String TAG = "FetcherService";
+
 	private static final int FETCHMODE_DIRECT = 1;
 	
 	private static final int FETCHMODE_REENCODE = 2;
@@ -104,10 +107,10 @@ public class FetcherService extends IntentService {
 	
 	private static Proxy proxy;
 	
-	public static class FetchResult {
-		public final int count;
-		public final ArrayList<String> feedIds;
-		public FetchResult(int count, ArrayList<String> feedIds) {
+	private static class FetchResult {
+		final int count;
+		final ArrayList<String> feedIds;
+		FetchResult(int count, ArrayList<String> feedIds) {
 			this.count = count;
 			this.feedIds = feedIds;
 		}
@@ -138,7 +141,7 @@ public class FetcherService extends IntentService {
 		
 		final NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 		
-		if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED && intent != null) {
+		if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED) {
 			if (preferences.getBoolean(Strings.SETTINGS_PROXYENABLED, false) && (networkInfo.getType() == ConnectivityManager.TYPE_WIFI || !preferences.getBoolean(Strings.SETTINGS_PROXYWIFIONLY, false))) {
 				try {
 					proxy = new Proxy(ZERO.equals(preferences.getString(Strings.SETTINGS_PROXYTYPE, ZERO)) ? Proxy.Type.HTTP : Proxy.Type.SOCKS, new InetSocketAddress(preferences.getString(Strings.SETTINGS_PROXYHOST, Strings.EMPTY), Integer.parseInt(preferences.getString(Strings.SETTINGS_PROXYPORT, Strings.DEFAULTPROXYPORT))));
@@ -253,7 +256,7 @@ public class FetcherService extends IntentService {
 		String selection = null;
 		
 		if (!overrideWifiOnly && networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
-			selection = new StringBuilder(FeedData.FeedColumns.WIFIONLY).append("=0 or ").append(FeedData.FeedColumns.WIFIONLY).append(" IS NULL").toString(); // "IS NOT 1" does not work on 2.1
+			selection = FeedData.FeedColumns.WIFIONLY + "=0 or " + FeedData.FeedColumns.WIFIONLY + " IS NULL"; // "IS NOT 1" does not work on 2.1
 		}
 
 		Cursor cursor = context.getContentResolver().query(feedId == null ? FeedData.FeedColumns.CONTENT_URI : FeedData.FeedColumns.CONTENT_URI(feedId), null, selection, null, null); // no managed query here
@@ -277,7 +280,7 @@ public class FetcherService extends IntentService {
 		boolean followHttpHttpsRedirects = preferences.getBoolean(Strings.SETTINGS_HTTPHTTPSREDIRECTS, false);
 		
 		int result = 0;
-		ArrayList<String> ids = new ArrayList<String>();
+		ArrayList<String> ids = new ArrayList<>();
 		boolean updateWidget = false;
 		
 		RSSHandler handler = new RSSHandler(context);
@@ -304,12 +307,12 @@ public class FetcherService extends IntentService {
 					if (contentType != null && contentType.startsWith(CONTENT_TYPE_TEXT_HTML)) {
 						BufferedReader reader = new BufferedReader(new InputStreamReader(getConnectionInputStream(connection)));
 						
-						String line = null;
+						String line;
 						
-						int pos = -1, posStart = -1;
+						int pos, posStart = -1;
 						
 						while ((line = reader.readLine()) != null) {
-							if (line.indexOf(HTML_BODY) > -1) {
+							if (line.contains(HTML_BODY)) {
 								break;
 							} else {
 								pos = line.indexOf(LINK_RSS);
@@ -334,7 +337,7 @@ public class FetcherService extends IntentService {
 												url = feedUrl+url;
 											}
 										} else if (!url.startsWith(Strings.HTTP) && !url.startsWith(Strings.HTTPS)) {
-											url = new StringBuilder(feedUrl).append('/').append(url).toString();
+											url = feedUrl + '/' + url;
 										}
 										values.put(FeedData.FeedColumns.URL, url);
 										context.getContentResolver().update(FeedData.FeedColumns.CONTENT_URI(id), values, null, null);
@@ -406,7 +409,7 @@ public class FetcherService extends IntentService {
 				byte[] iconBytes = cursor.getBlob(iconPosition);
 				
 				if (iconBytes == null) {
-					HttpURLConnection iconURLConnection = setupConnection(new URL(new StringBuilder(connection.getURL().getProtocol()).append(Strings.PROTOCOL_SEPARATOR).append(connection.getURL().getHost()).append(Strings.FILE_FAVICON).toString()), imposeUserAgent, followHttpHttpsRedirects);
+					HttpURLConnection iconURLConnection = setupConnection(new URL(connection.getURL().getProtocol() + Strings.PROTOCOL_SEPARATOR + connection.getURL().getHost() + Strings.FILE_FAVICON), imposeUserAgent, followHttpHttpsRedirects);
 					
 					try {
 						iconBytes = getBytes(getConnectionInputStream(iconURLConnection));
@@ -478,7 +481,7 @@ public class FetcherService extends IntentService {
 										handler.setReader(reader);
 										Xml.parse(reader, handler);
 									} catch (Exception e) {
-
+                                        Log.i(TAG, "Failed to read XML from " + feedUrl, e);
 									}
 								} else {
 									StringReader reader = new StringReader(new String(ouputStream.toByteArray()));
@@ -531,15 +534,15 @@ public class FetcherService extends IntentService {
 		return new FetchResult(result, ids);
 	}
 	
-	private static final HttpURLConnection setupConnection(String url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
+	private static HttpURLConnection setupConnection(String url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
 		return setupConnection(new URL(url), imposeUseragent, followHttpHttpsRedirects);
 	}
 	
-	private static final HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
+	private static HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
 		return setupConnection(url, imposeUseragent, followHttpHttpsRedirects, 0);
 	}
 	
-	private static final HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects, int cycle) throws IOException, NoSuchAlgorithmException, KeyManagementException {
+	private static HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects, int cycle) throws IOException, NoSuchAlgorithmException, KeyManagementException {
 		HttpURLConnection connection = proxy == null ? (HttpURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection(proxy);
 		
 		connection.setDoInput(true);
