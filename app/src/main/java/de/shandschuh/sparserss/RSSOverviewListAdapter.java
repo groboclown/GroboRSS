@@ -41,6 +41,9 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
+
+import net.groboclown.groborss.R;
+
 import de.shandschuh.sparserss.provider.FeedData;
 
 public class RSSOverviewListAdapter extends ResourceCursorAdapter {

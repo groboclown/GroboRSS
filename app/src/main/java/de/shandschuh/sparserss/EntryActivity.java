@@ -400,10 +400,18 @@ public class EntryActivity extends Activity {
 			}
 			if (abstractText == null) {
 				String link = entryCursor.getString(linkPosition);
-				
-				entryCursor.close();
-				finish();
-				startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
+
+				if (link != null && ! link.isEmpty()) {
+					entryCursor.close();
+					finish();
+					// This can cause a problem:
+					// "No activity found to handle Intent { act=android.intent.action.VIEW dat= }
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
+                } else {
+					// TODO figure out what to correctly show here.
+					// If you scroll into this, it causes the
+					// page view to close.
+				}
 			} else {
 				setTitle(entryCursor.getString(titlePosition));
 				if (titleTextView != null) {
