@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 
 public abstract class SimpleTask implements Runnable {

@@ -24,7 +24,7 @@
  * (this is an excerpt from BASE64 class of jaolt, except for the license)
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 
 public class BASE64 {

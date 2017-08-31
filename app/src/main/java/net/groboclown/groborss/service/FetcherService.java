@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss.service;
+package net.groboclown.groborss.service;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -61,12 +61,12 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.Xml;
-import de.shandschuh.sparserss.BASE64;
-import de.shandschuh.sparserss.MainTabActivity;
+import net.groboclown.groborss.BASE64;
+import net.groboclown.groborss.MainTabActivity;
 import net.groboclown.groborss.R;
-import de.shandschuh.sparserss.Strings;
-import de.shandschuh.sparserss.handler.RSSHandler;
-import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.Strings;
+import net.groboclown.groborss.handler.RSSHandler;
+import net.groboclown.groborss.provider.FeedData;
 
 public class FetcherService extends IntentService {
     private static final String TAG = "FetcherService";

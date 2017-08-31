@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -51,9 +51,9 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.util.ThemeSetting;
+
 import net.groboclown.groborss.provider.FeedData;
-import net.groboclown.groborss.R;
 
 public class EntriesListActivity extends ListActivity {
 	private static final int CONTEXTMENU_MARKASREAD_ID = 6;
@@ -83,7 +83,7 @@ public class EntriesListActivity extends ListActivity {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		ThemeSetter.setTheme(this);
+		ThemeSetting.setTheme(this);
 		super.onCreate(savedInstanceState);
 		
 		String title = null;

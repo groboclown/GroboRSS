@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -50,6 +50,7 @@ import android.preference.PreferenceManager;
 import android.text.ClipboardManager;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
@@ -71,11 +72,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
-import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.handler.EntryTextBuilder;
+import net.groboclown.groborss.util.ThemeSetting;
 import net.groboclown.groborss.provider.FeedData;
-import net.groboclown.groborss.R;
 
 public class EntryActivity extends Activity {
+	private static final String TAG = "EntryActivity";
+
 	/*
 	private static final String NEWLINE = "\n";
 	
@@ -192,7 +195,7 @@ public class EntryActivity extends Activity {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-        ThemeSetter.setTheme(this);
+        ThemeSetting.setTheme(this);
 		super.onCreate(savedInstanceState);
 		
 		int titleId = -1;
@@ -204,7 +207,7 @@ public class EntryActivity extends Activity {
 				/* This is a trick as com.android.internal.R.id.action_bar_title is not directly accessible */
 				titleId = (Integer) Class.forName("com.android.internal.R$id").getField("action_bar_title").get(null);
 			} catch (Exception exception) {
-				
+				Log.i(TAG, "Problem getting the action bar title", exception);
 			}
 		} else {
 			canShowIcon = requestWindowFeature(Window.FEATURE_LEFT_ICON);
@@ -213,7 +216,7 @@ public class EntryActivity extends Activity {
 		}
 		
 		try {
-			titleTextView = (TextView) findViewById(titleId);
+			titleTextView = findViewById(titleId);
 			titleTextView.setSingleLine(true);
 			titleTextView.setHorizontallyScrolling(true);
 			titleTextView.setMarqueeRepeatLimit(1);
@@ -222,6 +225,7 @@ public class EntryActivity extends Activity {
 			titleTextView.setFocusableInTouchMode(true);
 		} catch (Exception e) {
 			// just in case for non standard android, nullpointer etc
+			Log.i(TAG, "Problem setting up the view", e);
 		}
 		
 		uri = getIntent().getData();
@@ -231,6 +235,10 @@ public class EntryActivity extends Activity {
 		feedId = 0;
 		
 		Cursor entryCursor = getContentResolver().query(uri, null, null, null, null);
+        if (entryCursor == null) {
+            Log.w(TAG, "Could not find entry for " + uri);
+            throw new IllegalStateException("no entry for uri " + uri);
+        }
 		
 		titlePosition = entryCursor.getColumnIndex(FeedData.EntryColumns.TITLE);
 		datePosition = entryCursor.getColumnIndex(FeedData.EntryColumns.DATE);
@@ -241,20 +249,25 @@ public class EntryActivity extends Activity {
 		readDatePosition = entryCursor.getColumnIndex(FeedData.EntryColumns.READDATE);
 		enclosurePosition = entryCursor.getColumnIndex(FeedData.EntryColumns.ENCLOSURE);
 		authorPosition = entryCursor.getColumnIndex(FeedData.EntryColumns.AUTHOR);
+
+		// TODO new functionality / improvements
+		//   - "mark unread" button
+		//   - The url link button should always be active; if the entry itself doesn't have
+		//		a URI, then the page's source should be used, and the button icon changed slightly.
 		
 		entryCursor.close();
 		if (RSSOverview.notificationManager == null) {
 			RSSOverview.notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		}
 		
-		nextButton = (ImageButton) findViewById(R.id.next_button);
-		urlButton = (ImageButton) findViewById(R.id.url_button);
+		nextButton = findViewById(R.id.next_button);
+		urlButton = findViewById(R.id.url_button);
 		urlButton.setAlpha(BUTTON_ALPHA+30);
-		previousButton = (ImageButton) findViewById(R.id.prev_button);
-		playButton = (ImageButton) findViewById(R.id.play_button);
+		previousButton = findViewById(R.id.prev_button);
+		playButton = findViewById(R.id.play_button);
 		playButton.setAlpha(BUTTON_ALPHA);
 		
-		viewFlipper = (ViewFlipper) findViewById(R.id.content_flipper);
+		viewFlipper = findViewById(R.id.content_flipper);
 		
 		
 		
@@ -390,12 +403,15 @@ public class EntryActivity extends Activity {
 		values.put(FeedData.EntryColumns.READDATE, System.currentTimeMillis());
 		
 		Cursor entryCursor = getContentResolver().query(uri, null, null, null, null);
+        if (entryCursor == null) {
+            return;
+        }
 		
 		if (entryCursor.moveToFirst()) {
 			String abstractText = entryCursor.getString(abstractPosition);
 			
 			if (entryCursor.isNull(readDatePosition)) {
-				getContentResolver().update(uri, values, new StringBuilder(FeedData.EntryColumns.READDATE).append(Strings.DB_ISNULL).toString(), null);
+				getContentResolver().update(uri, values, FeedData.EntryColumns.READDATE + Strings.DB_ISNULL, null);
 			}
 			if (abstractText == null) {
 				String link = entryCursor.getString(linkPosition);
@@ -403,13 +419,11 @@ public class EntryActivity extends Activity {
 				if (link != null && ! link.isEmpty()) {
 					entryCursor.close();
 					finish();
-					// This can cause a problem:
-					// "No activity found to handle Intent { act=android.intent.action.VIEW dat= }
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
                 } else {
 					// TODO figure out what to correctly show here.
-					// If you scroll into this, it causes the
-					// page view to close.
+					// If you view this entry, it currently causes the page view to close.
+                    Log.d(TAG, "Nothing to show for " + uri);
 				}
 			} else {
 				setTitle(entryCursor.getString(titlePosition));
@@ -429,11 +443,12 @@ public class EntryActivity extends Activity {
 				if (canShowIcon) {
 					if (iconBytes == null || iconBytes.length == 0) {
 						Cursor iconCursor = getContentResolver().query(FeedData.FeedColumns.CONTENT_URI(Integer.toString(feedId)), new String[] {FeedData.FeedColumns._ID, FeedData.FeedColumns.ICON}, null, null, null);
-						
-						if (iconCursor.moveToFirst()) {
-							iconBytes = iconCursor.getBlob(1);
-						}
-						iconCursor.close();
+                        if (iconCursor != null) {
+                            if (iconCursor.moveToFirst()) {
+                                iconBytes = iconCursor.getBlob(1);
+                            }
+                            iconCursor.close();
+                        }
 					}
 					
 					if (iconBytes != null && iconBytes.length > 0) {
@@ -464,11 +479,11 @@ public class EntryActivity extends Activity {
 				if (author != null) {
 					dateStringBuilder.append(BRACKET).append(author).append(')');
 				}
-				
+
 				((TextView) findViewById(R.id.entry_date)).setText(dateStringBuilder);
-				
-				final ImageView imageView = (ImageView) findViewById(android.R.id.icon);
-				
+
+				final ImageView imageView = findViewById(android.R.id.icon);
+
 				favorite = entryCursor.getInt(favoritePosition) == 1;
 				
 				imageView.setImageResource(favorite ? android.R.drawable.star_on : android.R.drawable.star_off);
@@ -482,75 +497,21 @@ public class EntryActivity extends Activity {
 						getContentResolver().update(uri, values, null, null);
 					}
 				});
-				// loadData does not recognize the encoding without correct html-header
-				localPictures = abstractText.indexOf(Strings.IMAGEID_REPLACEMENT) > -1;
 
-				abstractText = abstractText.replace(Strings.IMAGEID_REPLACEMENT, uri.getLastPathSegment()+Strings.IMAGEFILE_IDSEPARATOR);
+                final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-				Pattern linkP = Pattern.compile("<a[^>]*href=[^>]*>");
-				Matcher linkM = linkP.matcher(abstractText);
-				if(!linkM.find()) {
-				    abstractText = abstractText.replaceAll("(?i)(https?://[^ \n\r\t\\[\\]]+)", "<a href=\"$1\">$1</a>");
-				}
-				
-				Pattern brP = Pattern.compile("<br[^>]*>");
-				Matcher brM = brP.matcher(abstractText);
-                if(!brM.find()) {
-                    abstractText = abstractText.replaceAll("\n", "<br>");
-                }
-                  
-                abstractText = abstractText.replaceAll("(?i)\\[(/?(b|u))\\]", "<$1>");
-                abstractText = abstractText.replaceAll("(?i)\\[img\\](https?://[^ \n\r\t\\[\\]]+)\\[/img\\]", "<img src='$1'>");                
-                abstractText = abstractText.replaceAll("(?i)\\[/?(center|color|size|img|url|pre)[^\\]]*\\]", "");                
-				
-				final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-				
-				if (localPictures) {
-					abstractText = abstractText.replace(Strings.IMAGEID_REPLACEMENT, _id+Strings.IMAGEFILE_IDSEPARATOR);
-				}
+                EntryTextBuilder entryText = new EntryTextBuilder()
+                        .withAbstractText(abstractText)
+                        .withEntryId(_id)
+                        .withUri(uri)
+                        .withPreferences(preferences);
+                entryText.render(webView, content, ThemeSetting.isLightColorMode(this));
+                localPictures = entryText.hasImages();
 
-				if (preferences.getBoolean(Strings.SETTINGS_DISABLEPICTURES, false)) {
-					abstractText = abstractText.replaceAll(Strings.HTML_IMG_REGEX, Strings.EMPTY);
-					webView.getSettings().setBlockNetworkImage(true);
-				} else {
-					if (webView.getSettings().getBlockNetworkImage()) {
-						/*
-						 * setBlockNetwortImage(false) calls postSync, which takes time,
-						 * so we clean up the html first and change the value afterwards
-						 */
-						webView.loadData(Strings.EMPTY, TEXT_HTML, UTF8);
-						webView.getSettings().setBlockNetworkImage(false);
-					}
-				}
-				
-				int fontsize = Integer.parseInt(preferences.getString(Strings.SETTINGS_FONTSIZE, Strings.ONE));
-				
-				/*
-				if (abstractText.indexOf('<') > -1 && abstractText.indexOf('>') > -1) {
-					abstractText = abstractText.replace(NEWLINE, BR);
-				}
-				*/
-				
-				if (MainTabActivity.isLightTheme(this) || preferences.getBoolean(Strings.SETTINGS_BLACKTEXTONWHITE, false)) {
-					if (fontsize > 0) {
-						webView.loadDataWithBaseURL(null, CSS + FONTSIZE_START + fontsize + FONTSIZE_MIDDLE + abstractText + FONTSIZE_END, TEXT_HTML, UTF8, null);
-					} else {
-						webView.loadDataWithBaseURL(null, CSS + BODY_START + abstractText + BODY_END, TEXT_HTML, UTF8, null);
-					}
-					webView.setBackgroundColor(Color.WHITE);
-					content.setBackgroundColor(Color.WHITE);
-				} else {
-					if (fontsize > 0) {
-						webView.loadDataWithBaseURL(null, FONT_FONTSIZE_START + fontsize + FONTSIZE_MIDDLE + abstractText + FONT_END, TEXT_HTML, UTF8, null);
-					} else {
-						webView.loadDataWithBaseURL(null, FONT_START + abstractText + BODY_END, TEXT_HTML, UTF8, null);
-					}
-					webView.setBackgroundColor(Color.BLACK);
-					content.setBackgroundColor(Color.BLACK);
-				}
-				
+
 				link = entryCursor.getString(linkPosition);
-				
+                // TODO if the link is empty, think about instead linking to the feed's URL.
+
 				if (link != null && link.length() > 0) {
 					urlButton.setEnabled(true);
 					urlButton.setAlpha(BUTTON_ALPHA+20);
@@ -563,10 +524,11 @@ public class EntryActivity extends Activity {
 					urlButton.setEnabled(false);
 					urlButton.setAlpha(80);
 				}
-				
+
+				// Enclosures are the multimedia attachment.
 				final String enclosure = entryCursor.getString(enclosurePosition);
 				
-				if (enclosure != null && enclosure.length() > 6 && enclosure.indexOf(IMAGE_ENCLOSURE) == -1) {
+				if (enclosure != null && enclosure.length() > 6 && !enclosure.contains(IMAGE_ENCLOSURE)) {
 					playButton.setVisibility(View.VISIBLE);
 					playButton.setOnClickListener(new OnClickListener() {
 						public void onClick(View v) {
@@ -654,6 +616,9 @@ public class EntryActivity extends Activity {
 		}
 
 		Cursor cursor = getContentResolver().query(parentUri, new String[] {FeedData.EntryColumns._ID}, queryString.toString() , null, successor ? DESC : ASC);
+        if (cursor == null) {
+            return;
+        }
 		
 		if (cursor.moveToFirst()) {
 			button.setEnabled(true);

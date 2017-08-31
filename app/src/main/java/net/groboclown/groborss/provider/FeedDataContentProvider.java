@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss.provider;
+package net.groboclown.groborss.provider;
 
 import java.io.File;
 
@@ -41,12 +41,13 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
-import de.shandschuh.sparserss.Strings;
+
+import net.groboclown.groborss.Strings;
 
 public class FeedDataContentProvider extends ContentProvider {
-	private static final String FOLDER = Environment.getExternalStorageDirectory()+"/sparserss/";
+	private static final String FOLDER = Environment.getExternalStorageDirectory()+"/groborss/";
 	
-	private static final String DATABASE_NAME = "sparserss.db";
+	private static final String DATABASE_NAME = "groborss.db";
 	
 	private static final int DATABASE_VERSION = 15;
 	
@@ -76,12 +77,13 @@ public class FeedDataContentProvider extends ContentProvider {
 	
 	private static final String EQUALS_ONE = "=1";
 
-	public static final String IMAGEFOLDER = Environment.getExternalStorageDirectory()+"/sparserss/images/"; // faster than FOLDER+"images/"
+	public static final String IMAGEFOLDER = Environment.getExternalStorageDirectory()+"/groborss/images/"; // faster than FOLDER+"images/"
 	
 	public static final File IMAGEFOLDER_FILE = new File(IMAGEFOLDER);
 	
-	private static final String BACKUPOPML = Environment.getExternalStorageDirectory()+"/sparserss/backup.opml";
-	
+	private static final String BACKUPOPML = Environment.getExternalStorageDirectory()+"/groborss/backup.opml";
+	public static final String GROBORSS_DB_FILE = "/groborss/groborss.db";
+
 	private static UriMatcher URI_MATCHER;
 	
 	private static final String[] PROJECTION_PRIORITY = new String[] {FeedData.FeedColumns.PRIORITY};
@@ -112,7 +114,7 @@ public class FeedDataContentProvider extends ContentProvider {
 			File backupFile = new File(BACKUPOPML);
 			
 			if (backupFile.exists()) {
-				/** Perform an automated import of the backup */
+				/* Perform an automated import of the backup */
 				OPML.importFromFile(backupFile, database);
 			}
 		}
@@ -192,13 +194,13 @@ public class FeedDataContentProvider extends ContentProvider {
 
 		@Override
 		public synchronized SQLiteDatabase getWritableDatabase() {
-			File oldDatabaseFile = new File(Environment.getExternalStorageDirectory()+"/sparserss/sparserss.db");
+			File oldDatabaseFile = new File(Environment.getExternalStorageDirectory()+ GROBORSS_DB_FILE);
 			
 			if (oldDatabaseFile.exists()) { // get rid of the old structure
 				SQLiteDatabase newDatabase = super.getWritableDatabase();
 				
 				try {
-					SQLiteDatabase oldDatabase  = SQLiteDatabase.openDatabase(Environment.getExternalStorageDirectory()+"/sparserss/sparserss.db", null, SQLiteDatabase.OPEN_READWRITE + SQLiteDatabase.CREATE_IF_NECESSARY);
+					SQLiteDatabase oldDatabase  = SQLiteDatabase.openDatabase(Environment.getExternalStorageDirectory()+GROBORSS_DB_FILE, null, SQLiteDatabase.OPEN_READWRITE + SQLiteDatabase.CREATE_IF_NECESSARY);
 					
 					Cursor cursor = oldDatabase.query(TABLE_ENTRIES, null, null, null, null, null, null);
 					
@@ -511,7 +513,7 @@ public class FeedDataContentProvider extends ContentProvider {
 						
 						priorityCursor.close();
 						if (newPriority > oldPriority) {
-							database.execSQL("UPDATE "+TABLE_FEEDS+" SET "+FeedData.FeedColumns.PRIORITY+" = "+FeedData.FeedColumns.PRIORITY+"-1 WHERE "+FeedData.FeedColumns.PRIORITY+" BETWEEN "+(oldPriority+1)+" AND "+newPriority);
+							database.execSQL("UPDATE "+TABLE_FEEDS+" SET "+FeedData.FeedColumns.PRIORITY+" = "+ FeedData.FeedColumns.PRIORITY+"-1 WHERE "+FeedData.FeedColumns.PRIORITY+" BETWEEN "+(oldPriority+1)+" AND "+newPriority);
 						} else if (newPriority < oldPriority) {
 							database.execSQL("UPDATE "+TABLE_FEEDS+" SET "+FeedData.FeedColumns.PRIORITY+" = "+FeedData.FeedColumns.PRIORITY+"+1 WHERE "+FeedData.FeedColumns.PRIORITY+" BETWEEN "+newPriority+" AND "+(oldPriority-1));
 						}

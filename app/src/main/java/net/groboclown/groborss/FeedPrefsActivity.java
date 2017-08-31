@@ -1,4 +1,4 @@
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import net.groboclown.groborss.provider.FeedData;
 import android.content.ContentValues;
@@ -8,7 +8,6 @@ import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
-import net.groboclown.groborss.R;
 
 public class FeedPrefsActivity extends PreferenceActivity {
 

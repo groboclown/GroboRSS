@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

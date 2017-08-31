@@ -23,11 +23,11 @@
  *
  */
 
-package de.shandschuh.sparserss.provider;
+package net.groboclown.groborss.provider;
 
 import java.io.File;
 
-import de.shandschuh.sparserss.handler.PictureFilenameFilter;
+import net.groboclown.groborss.handler.PictureFilenameFilter;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -37,7 +37,7 @@ import android.provider.BaseColumns;
 public class FeedData {
 	public static final String CONTENT = "content://";
 	
-	public static final String AUTHORITY = "de.shandschuh.sparserss.provider.FeedData";
+	public static final String AUTHORITY = "net.groboclown.groborss.provider.FeedData";
 	
 	private static final String TYPE_PRIMARY_KEY = "INTEGER PRIMARY KEY AUTOINCREMENT";
 	

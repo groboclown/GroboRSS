@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import net.groboclown.groborss.provider.FeedData;
 
@@ -35,7 +35,7 @@ public final class Strings {
 	
 	public static final String FEED_SETTINGS_SKIP_ALERT = "skipalert";
 
-	public static final String PACKAGE = "de.shandschuh.sparserss";
+	public static final String PACKAGE = "net.groboclown.groborss";
 	
 	public static final String SETTINGS_REFRESHINTERVAL = "refresh.interval";
 	
@@ -87,11 +87,11 @@ public final class Strings {
 	
 	public static final String SETTINGS_EFFICIENTFEEDPARSING = "efficientfeedparsing";
 	
-	public static final String ACTION_REFRESHFEEDS = "de.shandschuh.sparserss.REFRESH";
+	public static final String ACTION_REFRESHFEEDS = PACKAGE + ".REFRESH";
 	
-	public static final String ACTION_UPDATEWIDGET = "de.shandschuh.sparserss.FEEDUPDATED";
+	public static final String ACTION_UPDATEWIDGET = PACKAGE + ".FEEDUPDATED";
 	
-	public static final String ACTION_RESTART = "de.shandschuh.sparserss.RESTART";
+	public static final String ACTION_RESTART = PACKAGE + ".RESTART";
 	
 	public static final String FEEDID = "feedid";
 	

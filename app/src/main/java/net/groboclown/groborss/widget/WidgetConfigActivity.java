@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss.widget;
+package net.groboclown.groborss.widget;
 
 import android.appwidget.AppWidgetManager;
 import android.content.Intent;

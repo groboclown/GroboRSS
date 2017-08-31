@@ -34,43 +34,43 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Light" >
-        <service android:name="de.shandschuh.sparserss.service.RefreshService"/>
-        <service android:name="de.shandschuh.sparserss.service.FetcherService"/>
+        <service android:name="net.groboclown.groborss.service.RefreshService"/>
+        <service android:name="net.groboclown.groborss.service.FetcherService"/>
         <provider
-            android:name="de.shandschuh.sparserss.provider.FeedDataContentProvider"
-            android:authorities="de.shandschuh.sparserss.provider.FeedData"
-            android:readPermission="de.shandschuh.sparserss.READFEEDS"
-            android:writePermission="de.shandschuh.sparserss.WRITEFEEDS"/>
-        <activity android:name="de.shandschuh.sparserss.FeedPrefsActivity" />
-        <activity android:name="de.shandschuh.sparserss.MainTabActivity" android:label="@string/app_name" android:launchMode="singleTask">
+            android:name=".provider.FeedDataContentProvider"
+            android:authorities="net.groboclown.groborss.provider.FeedData"
+            android:readPermission="net.groboclown.groborss.READFEEDS"
+            android:writePermission="net.groboclown.groborss.WRITEFEEDS"/>
+        <activity android:name=".FeedPrefsActivity" />
+        <activity android:name=".EmptyActivity" />
+        <activity android:name=".MainTabActivity" android:label="@string/app_name" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="de.shandschuh.sparserss.RSSOverview" android:launchMode="singleTask" />
-        <activity android:name="de.shandschuh.sparserss.EmptyActivity"/>
-        <activity android:name="de.shandschuh.sparserss.EntriesListActivity" android:launchMode="singleTask">
+        <activity android:name=".RSSOverview" android:launchMode="singleTask" />
+        <activity android:name=".EntriesListActivity" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="vnd.android.cursor.dir/vnd.feeddata.entry" />
             </intent-filter>
         </activity>
-        <activity android:name="de.shandschuh.sparserss.EntryActivity" android:launchMode="singleTask">
+        <activity android:name=".EntryActivity" android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="vnd.android.cursor.item/vnd.feeddata.entry" />
             </intent-filter>
         </activity>
-        <activity android:name="de.shandschuh.sparserss.ApplicationPreferencesActivity"/>
-        <activity android:name="de.shandschuh.sparserss.widget.WidgetConfigActivity">
+        <activity android:name=".ApplicationPreferencesActivity"/>
+        <activity android:name=".widget.WidgetConfigActivity">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-        <activity android:name="de.shandschuh.sparserss.FeedConfigActivity" android:theme="@style/Theme.Dialog">
+        <activity android:name=".FeedConfigActivity" android:theme="@style/Theme.Dialog">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -82,20 +82,20 @@
                 <data android:mimeType="vnd.android.cursor.dir/vnd.feeddata.feed"/>
             </intent-filter>
         </activity>
-        <receiver android:name="de.shandschuh.sparserss.widget.SparseRSSAppWidgetProvider" >
+        <receiver android:name=".widget.SparseRSSAppWidgetProvider" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="de.shandschuh.sparserss.FEEDUPDATED" />
+                <action android:name="net.groboclown.groborss.FEEDUPDATED" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/widgetinfo" />
         </receiver>
-        <receiver android:name="de.shandschuh.sparserss.RefreshBroadcastReceiver" >
+        <receiver android:name=".RefreshBroadcastReceiver" >
             <intent-filter>
-                <action android:name="de.shandschuh.sparserss.REFRESH" />
+                <action android:name="net.groboclown.groborss.REFRESH" />
             </intent-filter>
         </receiver>
-        <receiver android:name="de.shandschuh.sparserss.BootCompletedBroadcastReceiver" >
+        <receiver android:name=".BootCompletedBroadcastReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

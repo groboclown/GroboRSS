@@ -4,8 +4,10 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:paddingTop="2dp"
+    android:paddingStart="4dp"
     android:paddingLeft="4dp"
     android:paddingBottom="4dp"
+    android:paddingEnd="2dp"
     android:paddingRight="2dp"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <RelativeLayout
@@ -16,9 +18,12 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingTop="4dp"
+        android:paddingEnd="2dp"
         android:paddingRight="2dp"
         android:paddingLeft="4dp"
+        android:paddingStart="4dp"
         android:background="#7C000000"
+        android:layout_marginEnd="3dip"
         android:layout_marginRight="3dip"
         android:layout_marginTop="3dip">
         <ImageView
@@ -42,6 +47,7 @@
             android:layout_below="@id/news_1"
             android:scaleType="center"/>
         <TextView
+            android:layout_toEndOf="@id/news_icon_2"
             android:layout_toRightOf="@id/news_icon_2"
             android:layout_below="@id/news_1"
             android:textColor="@xml/widgettext"
@@ -58,6 +64,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_3"
+            android:layout_toEndOf="@id/news_icon_3"
             android:layout_below="@id/news_2"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -73,6 +80,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_4"
+            android:layout_toEndOf="@id/news_icon_4"
             android:layout_below="@id/news_3"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -88,6 +96,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_5"
+            android:layout_toEndOf="@id/news_icon_5"
             android:layout_below="@id/news_4"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -103,6 +112,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_6"
+            android:layout_toEndOf="@id/news_icon_6"
             android:layout_below="@id/news_5"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -118,6 +128,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_7"
+            android:layout_toEndOf="@id/news_icon_7"
             android:layout_below="@id/news_6"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -133,6 +144,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_8"
+            android:layout_toEndOf="@id/news_icon_8"
             android:layout_below="@id/news_7"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -148,6 +160,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_9"
+            android:layout_toEndOf="@id/news_icon_9"
             android:layout_below="@id/news_8"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -163,6 +176,7 @@
             android:scaleType="center"/>
         <TextView
             android:layout_toRightOf="@id/news_icon_10"
+            android:layout_toEndOf="@id/news_icon_10"
             android:layout_below="@id/news_9"
             android:textColor="@xml/widgettext"
             android:singleLine="true"
@@ -174,6 +188,7 @@
     <ImageView
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:src="@xml/widgeticon"
         android:id="@+id/feed_icon"
         android:layout_width="wrap_content"

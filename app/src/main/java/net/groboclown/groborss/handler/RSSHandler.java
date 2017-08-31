@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss.handler;
+package net.groboclown.groborss.handler;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,7 +48,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.text.Html;
-import de.shandschuh.sparserss.Strings;
+import net.groboclown.groborss.Strings;
 import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.provider.FeedDataContentProvider;
 import net.groboclown.groborss.service.FetcherService;

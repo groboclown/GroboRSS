@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss.widget;
+package net.groboclown.groborss.widget;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
@@ -37,9 +37,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.view.View;
 import android.widget.RemoteViews;
-import de.shandschuh.sparserss.MainTabActivity;
+import net.groboclown.groborss.MainTabActivity;
 import net.groboclown.groborss.R;
-import de.shandschuh.sparserss.Strings;
+import net.groboclown.groborss.Strings;
 import net.groboclown.groborss.provider.FeedData;
 
 public class SparseRSSAppWidgetProvider extends AppWidgetProvider {

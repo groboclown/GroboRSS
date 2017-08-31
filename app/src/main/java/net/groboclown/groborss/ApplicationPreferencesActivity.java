@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -37,15 +37,13 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
-import net.groboclown.groborss.R;
-
-import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.util.ThemeSetting;
 import net.groboclown.groborss.service.RefreshService;
 
 public class ApplicationPreferencesActivity extends PreferenceActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		ThemeSetter.setTheme(this);
+		ThemeSetting.setTheme(this);
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.layout.preferences);
 		

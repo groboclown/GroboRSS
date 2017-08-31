@@ -27,7 +27,7 @@
  * existing references on startup.
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.app.Activity;
 import android.graphics.drawable.Drawable;

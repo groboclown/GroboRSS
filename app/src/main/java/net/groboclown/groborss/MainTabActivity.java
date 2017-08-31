@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -51,10 +51,10 @@ import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 
-import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.util.ThemeSetting;
+
 import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.service.FetcherService;
-import net.groboclown.groborss.R;
 
 public class MainTabActivity extends TabActivity {
 	private static final int DIALOG_LICENSEAGREEMENT = 0;
@@ -71,17 +71,7 @@ public class MainTabActivity extends TabActivity {
 	
 	public static final boolean POSTGINGERBREAD = !Build.VERSION.RELEASE.startsWith("1") &&
 		!Build.VERSION.RELEASE.startsWith("2"); // this way around is future save
-	
-	
-	private static Boolean LIGHTTHEME;
-	
-	public static boolean isLightTheme(Context context) {
-		if (LIGHTTHEME == null) {
-			LIGHTTHEME = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Strings.SETTINGS_LIGHTTHEME, false);
-		}
-		return LIGHTTHEME;
-	}
-	
+
 	private Menu menu;
 	
 	private BroadcastReceiver refreshReceiver = new BroadcastReceiver() {
@@ -94,7 +84,7 @@ public class MainTabActivity extends TabActivity {
 	private boolean hasContent;
 	
 	public void onCreate(Bundle savedInstanceState) {
-		ThemeSetter.setTheme(this);
+		ThemeSetting.setTheme(this);
 	    super.onCreate(savedInstanceState);
 	    
         //We need to display progress information
@@ -118,7 +108,7 @@ public class MainTabActivity extends TabActivity {
 	{
 		super.onResume();
 		setProgressBarIndeterminateVisibility(isCurrentlyRefreshing());
-		registerReceiver(refreshReceiver, new IntentFilter("de.shandschuh.sparserss.REFRESH"));
+		registerReceiver(refreshReceiver, new IntentFilter("net.groboclown.groborss.REFRESH"));
 	}
 	
 	@Override
@@ -238,7 +228,8 @@ public class MainTabActivity extends TabActivity {
 		if (visible) {
 			if (!tabsAdded) {
 				TabHost tabHost = getTabHost();
-				
+
+                // TODO "all tab" can be a HUUUGE performance hog, and even cause a crash.
 				tabHost.addTab(tabHost.newTabSpec(TAG_ALL).setIndicator(getString(R.string.all)).setContent(new Intent(Intent.ACTION_VIEW, FeedData.EntryColumns.CONTENT_URI).putExtra(EntriesListActivity.EXTRA_SHOWFEEDINFO, true)));
 			    tabHost.addTab(tabHost.newTabSpec(TAG_FAVORITE).setIndicator(getString(R.string.favorites), getResources().getDrawable(android.R.drawable.star_big_on)).setContent(new Intent(Intent.ACTION_VIEW, FeedData.EntryColumns.FAVORITES_CONTENT_URI).putExtra(EntriesListActivity.EXTRA_SHOWFEEDINFO, true)));
 				tabsAdded = true;

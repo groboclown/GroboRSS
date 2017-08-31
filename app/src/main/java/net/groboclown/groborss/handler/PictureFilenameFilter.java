@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss.handler;
+package net.groboclown.groborss.handler;
 
 import java.io.File;
 import java.io.FilenameFilter;

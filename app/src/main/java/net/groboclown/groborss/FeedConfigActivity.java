@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.app.Activity;
 import android.content.ContentValues;
@@ -37,7 +37,6 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import net.groboclown.groborss.provider.FeedData;
-import net.groboclown.groborss.R;
 
 public class FeedConfigActivity extends Activity {
 	private static final String WASACTIVE = "wasactive";

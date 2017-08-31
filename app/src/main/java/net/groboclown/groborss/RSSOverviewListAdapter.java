@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -41,8 +41,6 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
-
-import net.groboclown.groborss.R;
 
 import net.groboclown.groborss.provider.FeedData;
 

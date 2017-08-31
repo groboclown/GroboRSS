@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;

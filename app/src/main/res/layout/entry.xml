@@ -6,6 +6,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android" >
     <LinearLayout
         android:paddingLeft="4pt"
+        android:paddingStart="4pt"
+        android:paddingRight="1pt"
+        android:paddingEnd="1pt"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent">
         <TextView

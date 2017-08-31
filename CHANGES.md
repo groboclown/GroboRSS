@@ -8,6 +8,7 @@
 * Features:
     * Forked from Sparse rss version 1.7, with `doits` patches.
     * Migrated to modern Android development environment.
+    * Better BBCode formatting.
 * Bugs:
     * Fixed a crash that occurred when a feed item had no text and no link.
 

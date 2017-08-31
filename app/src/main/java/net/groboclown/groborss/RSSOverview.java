@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss;
 
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -59,12 +59,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import de.shandschuh.sparserss.action.OpmlImportAction;
-import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.action.OpmlImportAction;
+import net.groboclown.groborss.util.ThemeSetting;
+
 import net.groboclown.groborss.provider.FeedData;
-import de.shandschuh.sparserss.provider.OPML;
+import net.groboclown.groborss.provider.OPML;
 import net.groboclown.groborss.service.RefreshService;
-import net.groboclown.groborss.R;
 
 public class RSSOverview extends ListActivity {
 	public static final int DIALOG_ERROR_FEEDIMPORT = 3;
@@ -108,7 +108,7 @@ public class RSSOverview extends ListActivity {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-		ThemeSetter.setTheme(this);
+		ThemeSetting.setTheme(this);
         super.onCreate(savedInstanceState);
 
     	if (notificationManager == null) {
@@ -251,7 +251,7 @@ public class RSSOverview extends ListActivity {
 		return true;
 	}
 
-	@SuppressWarnings("deprecation")
+	//@SuppressWarnings("deprecation")
 	@Override
 	public boolean onMenuItemSelected(int featureId, final MenuItem item) {
 		setFeedSortEnabled(false);
@@ -434,9 +434,10 @@ public class RSSOverview extends ListActivity {
 				break;
 			}
 			case R.id.menu_export: {
+				// TODO allow selecting an output directory and name.
 				if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) ||Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
 					try {
-						String filename = new StringBuilder(Environment.getExternalStorageDirectory().toString()).append("/sparse_rss_").append(System.currentTimeMillis()).append(".opml").toString();
+						String filename = Environment.getExternalStorageDirectory().toString() + "/grobo_rss_" + System.currentTimeMillis() + ".opml";
 						
 						OPML.exportToFile(filename, this);
 						Toast.makeText(this, String.format(getString(R.string.message_exportedto), filename), Toast.LENGTH_LONG).show();
@@ -520,7 +521,7 @@ public class RSSOverview extends ListActivity {
 				
 				builder.setIcon(android.R.drawable.ic_dialog_info);		
 				builder.setTitle(R.string.menu_about);
-				MainTabActivity.INSTANCE.setupLicenseText(builder);			
+				MainTabActivity.INSTANCE.setupLicenseText(builder);
 				builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						dialog.cancel();
