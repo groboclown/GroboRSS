@@ -45,7 +45,7 @@ import android.view.View.OnClickListener;
 import android.widget.ImageView;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
-import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.R;
 
 public class EntriesListAdapter extends ResourceCursorAdapter {

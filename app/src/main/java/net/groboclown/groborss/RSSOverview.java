@@ -25,9 +25,6 @@
 
 package de.shandschuh.sparserss;
 
-import java.io.File;
-import java.io.FilenameFilter;
-
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Dialog;
@@ -63,9 +60,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import de.shandschuh.sparserss.action.OpmlImportAction;
-import de.shandschuh.sparserss.provider.FeedData;
+import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.provider.FeedData;
 import de.shandschuh.sparserss.provider.OPML;
-import de.shandschuh.sparserss.service.RefreshService;
+import net.groboclown.groborss.service.RefreshService;
 import net.groboclown.groborss.R;
 
 public class RSSOverview extends ListActivity {
@@ -110,9 +108,7 @@ public class RSSOverview extends ListActivity {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	if (MainTabActivity.isLightTheme(this)) {
-    		setTheme(R.style.Theme_Light);
-    	}
+		ThemeSetter.setTheme(this);
         super.onCreate(savedInstanceState);
 
     	if (notificationManager == null) {

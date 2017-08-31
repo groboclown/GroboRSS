@@ -50,7 +50,9 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
-import de.shandschuh.sparserss.provider.FeedData;
+
+import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.R;
 
 public class EntriesListActivity extends ListActivity {
@@ -81,10 +83,7 @@ public class EntriesListActivity extends ListActivity {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		if (MainTabActivity.isLightTheme(this)) {
-			setTheme(R.style.Theme_Light);
-		}
-		
+		ThemeSetter.setTheme(this);
 		super.onCreate(savedInstanceState);
 		
 		String title = null;

@@ -25,7 +25,7 @@
 
 package de.shandschuh.sparserss;
 
-import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedData;
 
 public final class Strings {
 

@@ -37,7 +37,7 @@ import android.preference.PreferenceCategory;
 import android.view.View;
 import android.view.View.OnClickListener;
 import net.groboclown.groborss.R;
-import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedData;
 
 public class WidgetConfigActivity extends PreferenceActivity {
 	private int widgetId;

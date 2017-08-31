@@ -1,7 +1,7 @@
 /**
  * Sparse rss
- *
- * Copyright (c) 2012 Stefan Handschuh
+ * 
+ * Copyright (c) 2010 Stefan Handschuh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,37 +23,17 @@
  *
  */
 
-package de.shandschuh.sparserss.handler;
+package de.shandschuh.sparserss;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.regex.Pattern;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import net.groboclown.groborss.service.FetcherService;
 
-import de.shandschuh.sparserss.provider.FeedDataContentProvider;
-
-public class PictureFilenameFilter implements FilenameFilter {
-	private static final String REGEX = "__[^\\.]*\\.[A-Za-z]*";
+public class RefreshBroadcastReceiver extends BroadcastReceiver {
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		context.startService(new Intent(context, FetcherService.class).putExtras(intent)); // a thread would mark the process as inactive
+	}
 	
-	private Pattern pattern;
-	
-	public PictureFilenameFilter(String entryId) {
-		setEntryId(entryId);
-	}
-
-	public PictureFilenameFilter() {
-
-	}
-
-	public void setEntryId(String entryId) {
-		pattern = Pattern.compile(entryId+REGEX);
-	}
-
-	public boolean accept(File dir, String filename) {
-		if (dir != null && dir.equals(FeedDataContentProvider.IMAGEFOLDER_FILE)) { // this should be always true but lets check it anyway
-			return pattern.matcher(filename).find();
-		} else {
-			return false;
-		}
-	}
-
 }

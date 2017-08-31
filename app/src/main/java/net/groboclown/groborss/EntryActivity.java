@@ -70,7 +70,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
-import de.shandschuh.sparserss.provider.FeedData;
+
+import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.R;
 
 public class EntryActivity extends Activity {
@@ -190,10 +192,7 @@ public class EntryActivity extends Activity {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		if (MainTabActivity.isLightTheme(this)) {
-			setTheme(R.style.Theme_Light);
-		}
-		
+        ThemeSetter.setTheme(this);
 		super.onCreate(savedInstanceState);
 		
 		int titleId = -1;
@@ -534,17 +533,17 @@ public class EntryActivity extends Activity {
 				
 				if (MainTabActivity.isLightTheme(this) || preferences.getBoolean(Strings.SETTINGS_BLACKTEXTONWHITE, false)) {
 					if (fontsize > 0) {
-						webView.loadDataWithBaseURL(null, new StringBuilder(CSS).append(FONTSIZE_START).append(fontsize).append(FONTSIZE_MIDDLE).append(abstractText).append(FONTSIZE_END).toString(), TEXT_HTML, UTF8, null);
+						webView.loadDataWithBaseURL(null, CSS + FONTSIZE_START + fontsize + FONTSIZE_MIDDLE + abstractText + FONTSIZE_END, TEXT_HTML, UTF8, null);
 					} else {
-						webView.loadDataWithBaseURL(null, new StringBuilder(CSS).append(BODY_START).append(abstractText).append(BODY_END).toString(), TEXT_HTML, UTF8, null);
+						webView.loadDataWithBaseURL(null, CSS + BODY_START + abstractText + BODY_END, TEXT_HTML, UTF8, null);
 					}
 					webView.setBackgroundColor(Color.WHITE);
 					content.setBackgroundColor(Color.WHITE);
 				} else {
 					if (fontsize > 0) {
-						webView.loadDataWithBaseURL(null, new StringBuilder(FONT_FONTSIZE_START).append(fontsize).append(FONTSIZE_MIDDLE).append(abstractText).append(FONT_END).toString(), TEXT_HTML, UTF8, null);
+						webView.loadDataWithBaseURL(null, FONT_FONTSIZE_START + fontsize + FONTSIZE_MIDDLE + abstractText + FONT_END, TEXT_HTML, UTF8, null);
 					} else {
-						webView.loadDataWithBaseURL(null, new StringBuilder(FONT_START).append(abstractText).append(BODY_END).toString(), TEXT_HTML, UTF8, null);
+						webView.loadDataWithBaseURL(null, FONT_START + abstractText + BODY_END, TEXT_HTML, UTF8, null);
 					}
 					webView.setBackgroundColor(Color.BLACK);
 					content.setBackgroundColor(Color.BLACK);

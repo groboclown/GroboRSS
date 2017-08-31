@@ -44,7 +44,7 @@ import android.widget.TextView;
 
 import net.groboclown.groborss.R;
 
-import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedData;
 
 public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 	private static final String COUNT_UNREAD = "COUNT(*) - COUNT(readdate)";

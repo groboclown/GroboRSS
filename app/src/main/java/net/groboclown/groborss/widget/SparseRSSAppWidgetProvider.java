@@ -40,7 +40,7 @@ import android.widget.RemoteViews;
 import de.shandschuh.sparserss.MainTabActivity;
 import net.groboclown.groborss.R;
 import de.shandschuh.sparserss.Strings;
-import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedData;
 
 public class SparseRSSAppWidgetProvider extends AppWidgetProvider {
 	private static final String LIMIT = " limit ";

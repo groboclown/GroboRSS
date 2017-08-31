@@ -39,18 +39,17 @@ import android.preference.PreferenceManager;
 
 import net.groboclown.groborss.R;
 
-import de.shandschuh.sparserss.service.RefreshService;
+import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.service.RefreshService;
 
 public class ApplicationPreferencesActivity extends PreferenceActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		if (MainTabActivity.isLightTheme(this)) {
-			setTheme(R.style.Theme_Light);
-		}
+		ThemeSetter.setTheme(this);
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.layout.preferences);
 		
-		Preference preference = (Preference) findPreference(Strings.SETTINGS_REFRESHENABLED);
+		Preference preference = findPreference(Strings.SETTINGS_REFRESHENABLED);
 
 		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -61,14 +60,14 @@ public class ApplicationPreferencesActivity extends PreferenceActivity {
 						}
 					}.start();
 				} else {
-					getPreferences(MODE_PRIVATE).edit().putLong(Strings.PREFERENCE_LASTSCHEDULEDREFRESH, 0).commit();
 					stopService(new Intent(ApplicationPreferencesActivity.this, RefreshService.class));
+					getPreferences(MODE_PRIVATE).edit().putLong(Strings.PREFERENCE_LASTSCHEDULEDREFRESH, 0).apply();
 				}
 				return true;
 			}
 		});
 		
-		preference = (Preference) findPreference(Strings.SETTINGS_SHOWTABS);
+		preference = findPreference(Strings.SETTINGS_SHOWTABS);
 		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				if (MainTabActivity.INSTANCE != null ) {
@@ -78,12 +77,13 @@ public class ApplicationPreferencesActivity extends PreferenceActivity {
 			}
 		});	
 		
-		preference = (Preference) findPreference(Strings.SETTINGS_LIGHTTHEME);
+		preference = findPreference(Strings.SETTINGS_LIGHTTHEME);
 		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				Editor editor = PreferenceManager.getDefaultSharedPreferences(ApplicationPreferencesActivity.this).edit();
 				
 				editor.putBoolean(Strings.SETTINGS_LIGHTTHEME, Boolean.TRUE.equals(newValue));
+				// Commit, not apply, before killing the process.
 				editor.commit();
 				android.os.Process.killProcess(android.os.Process.myPid());
 				
@@ -92,7 +92,7 @@ public class ApplicationPreferencesActivity extends PreferenceActivity {
 			}
 		});
 		
-		preference = (Preference) findPreference(Strings.SETTINGS_EFFICIENTFEEDPARSING);
+		preference = findPreference(Strings.SETTINGS_EFFICIENTFEEDPARSING);
 		preference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(final Preference preference, Object newValue) {
 				if (newValue.equals(Boolean.FALSE)) {
@@ -105,7 +105,7 @@ public class ApplicationPreferencesActivity extends PreferenceActivity {
 							Editor editor = PreferenceManager.getDefaultSharedPreferences(ApplicationPreferencesActivity.this).edit();
 							
 							editor.putBoolean(Strings.SETTINGS_EFFICIENTFEEDPARSING, Boolean.FALSE);
-							editor.commit();
+							editor.apply();
 							((CheckBoxPreference) preference).setChecked(false);
 							dialog.dismiss();
 						}

@@ -1,7 +1,7 @@
 /**
- * Sparse rss
- * 
- * Copyright (c) 2010 Stefan Handschuh
+ * GroboRSS
+ *
+ * Copyright (c) 2017 Groboclown
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,17 +23,33 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package net.groboclown.groborss.action;
 
-import android.content.BroadcastReceiver;
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import de.shandschuh.sparserss.service.FetcherService;
+import android.preference.PreferenceManager;
 
-public class RefreshBroadcastReceiver extends BroadcastReceiver {
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		context.startService(new Intent(context, FetcherService.class).putExtras(intent)); // a thread would mark the process as inactive
-	}
-	
+import net.groboclown.groborss.R;
+
+import net.groboclown.groborss.MainTabActivity;
+import net.groboclown.groborss.Strings;
+
+public class ThemeSetter {
+    private static Boolean LIGHTTHEME;
+
+    public static boolean isLightTheme(Context context) {
+        if (LIGHTTHEME == null) {
+            LIGHTTHEME = PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Strings.SETTINGS_LIGHTTHEME, false);
+        }
+        return LIGHTTHEME;
+    }
+
+
+    public static void setTheme(Activity activity) {
+        if (MainTabActivity.isLightTheme(activity)) {
+            activity.setTheme(R.style.Theme_Light);
+        } else {
+            activity.setTheme(R.style.Theme_Dark);
+        }
+    }
 }

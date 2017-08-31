@@ -49,9 +49,9 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.text.Html;
 import de.shandschuh.sparserss.Strings;
-import de.shandschuh.sparserss.provider.FeedData;
-import de.shandschuh.sparserss.provider.FeedDataContentProvider;
-import de.shandschuh.sparserss.service.FetcherService;
+import net.groboclown.groborss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedDataContentProvider;
+import net.groboclown.groborss.service.FetcherService;
 
 public class RSSHandler extends DefaultHandler {
 	private static final String ANDRHOMBUS = "&#";

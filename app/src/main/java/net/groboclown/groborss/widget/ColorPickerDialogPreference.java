@@ -32,6 +32,7 @@ import android.view.View;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import net.groboclown.groborss.R;
+import net.groboclown.groborss.widget.SparseRSSAppWidgetProvider;
 
 public class ColorPickerDialogPreference extends DialogPreference {
 	private SeekBar redSeekBar;

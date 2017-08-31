@@ -50,8 +50,10 @@ import android.view.Window;
 import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
-import de.shandschuh.sparserss.provider.FeedData;
-import de.shandschuh.sparserss.service.FetcherService;
+
+import de.shandschuh.sparserss.action.ThemeSetter;
+import net.groboclown.groborss.provider.FeedData;
+import net.groboclown.groborss.service.FetcherService;
 import net.groboclown.groborss.R;
 
 public class MainTabActivity extends TabActivity {
@@ -92,9 +94,7 @@ public class MainTabActivity extends TabActivity {
 	private boolean hasContent;
 	
 	public void onCreate(Bundle savedInstanceState) {
-		if (isLightTheme(this)) {
-	    	setTheme(R.style.Theme_Light);
-	    }
+		ThemeSetter.setTheme(this);
 	    super.onCreate(savedInstanceState);
 	    
         //We need to display progress information
@@ -251,14 +251,15 @@ public class MainTabActivity extends TabActivity {
 	}
 	
 	void setupLicenseText(AlertDialog.Builder builder) {
+		// TODO don't use NULL here.
 		View view = getLayoutInflater().inflate(R.layout.license, null);
 		
-		final TextView textView = (TextView) view.findViewById(R.id.license_text);
+		final TextView textView = view.findViewById(R.id.license_text);
 
 		textView.setTextColor(textView.getTextColors().getDefaultColor()); // disables color change on selection
 		textView.setText(new StringBuilder(getString(R.string.license_intro)).append(Strings.THREENEWLINES).append(getString(R.string.license)));
 		
-		final TextView contributorsTextView = (TextView) view.findViewById(R.id.contributors_togglebutton);
+		final TextView contributorsTextView = view.findViewById(R.id.contributors_togglebutton);
 		
 		contributorsTextView.setOnClickListener(new OnClickListener() {
 			boolean showingLicense = true;

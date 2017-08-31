@@ -1,7 +1,7 @@
 /**
  * Sparse rss
- * 
- * Copyright (c) 2010-2012 Stefan Handschuh
+ *
+ * Copyright (c) 2012 Stefan Handschuh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,28 +23,36 @@
  *
  */
 
-package de.shandschuh.sparserss;
+package de.shandschuh.sparserss.handler;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.preference.PreferenceManager;
-import de.shandschuh.sparserss.service.RefreshService;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.regex.Pattern;
 
-public class BootCompletedBroadcastReceiver extends BroadcastReceiver {
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		try {
-			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context.createPackageContext(Strings.PACKAGE, 0));
-			
-			preferences.edit().putLong(Strings.PREFERENCE_LASTSCHEDULEDREFRESH, 0).commit();
-			if (preferences.getBoolean(Strings.SETTINGS_REFRESHENABLED, false)) {
-				context.startService(new Intent(context, RefreshService.class));
-			}
-			context.sendBroadcast(new Intent(Strings.ACTION_UPDATEWIDGET));
-		} catch (NameNotFoundException e) {
+import net.groboclown.groborss.provider.FeedDataContentProvider;
+
+public class PictureFilenameFilter implements FilenameFilter {
+	private static final String REGEX = "__[^\\.]*\\.[A-Za-z]*";
+	
+	private Pattern pattern;
+	
+	public PictureFilenameFilter(String entryId) {
+		setEntryId(entryId);
+	}
+
+	public PictureFilenameFilter() {
+
+	}
+
+	public void setEntryId(String entryId) {
+		pattern = Pattern.compile(entryId+REGEX);
+	}
+
+	public boolean accept(File dir, String filename) {
+		if (dir != null && dir.equals(FeedDataContentProvider.IMAGEFOLDER_FILE)) { // this should be always true but lets check it anyway
+			return pattern.matcher(filename).find();
+		} else {
+			return false;
 		}
 	}
 

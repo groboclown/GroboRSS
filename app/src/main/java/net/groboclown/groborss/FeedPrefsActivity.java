@@ -1,6 +1,6 @@
 package de.shandschuh.sparserss;
 
-import de.shandschuh.sparserss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedData;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.Bundle;

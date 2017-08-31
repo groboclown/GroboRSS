@@ -23,7 +23,7 @@
  *
  */
 
-package de.shandschuh.sparserss.provider;
+package net.groboclown.groborss.provider;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -44,6 +44,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Xml;
+
+import net.groboclown.groborss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedDataContentProvider;
+
 import de.shandschuh.sparserss.Strings;
 
 public class OPML {
