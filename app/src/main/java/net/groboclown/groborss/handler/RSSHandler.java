@@ -48,12 +48,16 @@ import android.content.Context;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.text.Html;
+import android.util.Log;
+
 import net.groboclown.groborss.Strings;
 import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.provider.FeedDataContentProvider;
 import net.groboclown.groborss.service.FetcherService;
 
 public class RSSHandler extends DefaultHandler {
+	private static final String LOG_TAG = "RSSHandler";
+
 	private static final String ANDRHOMBUS = "&#";
 	
 	private static final String TAG_RSS = "rss";
@@ -170,7 +174,7 @@ public class RSSHandler extends DefaultHandler {
 	private StringBuilder dateStringBuilder;
 	
 	private Date entryDate;
-	
+
 	private StringBuilder entryLink;
 	
 	private StringBuilder description;
@@ -214,7 +218,7 @@ public class RSSHandler extends DefaultHandler {
 	private StringBuilder author;
 	
 	private boolean nameTagEntered;
-	
+
 	public RSSHandler(Context context) {
 		KEEP_TIME = Long.parseLong(PreferenceManager.getDefaultSharedPreferences(context).getString(Strings.SETTINGS_KEEPTIME, "4"))*86400000l;
 		this.context = context;
@@ -280,7 +284,6 @@ public class RSSHandler extends DefaultHandler {
 			dateStringBuilder = new StringBuilder();
 		} else if (TAG_ENTRY.equals(localName) || TAG_ITEM.equals(localName)) {
 			description = null;
-			entryLink = null;
 			if (!feedRefreshed) {
 				ContentValues values = new ContentValues();
 					
@@ -295,10 +298,14 @@ public class RSSHandler extends DefaultHandler {
 					realLastUpdate = Math.max(entryDate != null ? entryDate.getTime() : System.currentTimeMillis() - 1000, realLastUpdate);
 				}
 				values.put(FeedData.FeedColumns.REALLASTUPDATE, realLastUpdate);
+				if (entryLink != null && entryLink.length() > 0) {
+					values.put(FeedData.FeedColumns.HOMEPAGE, entryLink.toString().trim());
+				}
 				context.getContentResolver().update(FeedData.FeedColumns.CONTENT_URI(id), values, null, null);
 				title = null;
 				feedRefreshed = true;
 			}
+			entryLink = null;
 		} else if (TAG_TITLE.equals(localName)) {
 			if (title == null) {
 				titleTagEntered = true;
@@ -433,7 +440,7 @@ public class RSSHandler extends DefaultHandler {
 		} else if (TAG_ENTRY.equals(localName) || TAG_ITEM.equals(localName)) {
 			if (title != null && (entryDate == null || ((entryDate.after(lastUpdateDate) || !efficientFeedParsing) && entryDate.after(keepDateBorder)))) {
 				ContentValues values = new ContentValues();
-				
+
 				if (entryDate != null && entryDate.getTime() > realLastUpdate) {
 					realLastUpdate = entryDate.getTime();
 					
@@ -459,7 +466,7 @@ public class RSSHandler extends DefaultHandler {
 					
 					if (descriptionString.length() > 0) {
 						if (fetchImages) {
-							images = new Vector<String>(4);
+							images = new Vector<>(4);
 							 
 							Matcher matcher = imgPattern.matcher(description);
 							
@@ -483,7 +490,7 @@ public class RSSHandler extends DefaultHandler {
 					values.put(FeedData.EntryColumns.ENCLOSURE, enclosureString);
 					existanceStringBuilder.append(Strings.DB_AND).append(FeedData.EntryColumns.ENCLOSURE).append(Strings.DB_ARG);
 				}
-				
+
 				String guidString = null;
 				
 				if (guid != null && guid.length() > 0) {
@@ -526,17 +533,21 @@ public class RSSHandler extends DefaultHandler {
 					if (fetchImages) {
 						FeedDataContentProvider.IMAGEFOLDER_FILE.mkdir(); // create images dir
 						for (int n = 0, i = images != null ? images.size() : 0; n < i; n++) {
+							String filename = null;
 							try {
 								String match = images.get(n);
+								filename = FeedDataContentProvider.IMAGEFOLDER + entryId
+										+ Strings.IMAGEFILE_IDSEPARATOR
+										+ match.substring(match.lastIndexOf('/') + 1);
 								
 								byte[] data = FetcherService.getBytes(new URL(images.get(n)).openStream());
 								
-								FileOutputStream fos = new FileOutputStream(new StringBuilder(FeedDataContentProvider.IMAGEFOLDER).append(entryId).append(Strings.IMAGEFILE_IDSEPARATOR).append(match.substring(match.lastIndexOf('/')+1)).toString());
+								FileOutputStream fos = new FileOutputStream(filename);
 								
 								fos.write(data);
 								fos.close();
 							} catch (Exception e) {
-
+								Log.w(LOG_TAG, "Problem saving file " + filename, e);
 							}
 						}
 					}

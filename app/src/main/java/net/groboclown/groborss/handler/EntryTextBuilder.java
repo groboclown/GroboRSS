@@ -162,6 +162,10 @@ public class EntryTextBuilder {
             text = text.replaceAll(Strings.HTML_IMG_REGEX, Strings.EMPTY);
         }
 
+        if (mPreferences.getBoolean(Strings.SETTINGS_STRIP_WEB_BUGS, false)) {
+            text = stripWebBugs(text);
+        }
+
         // Show alt text...
         text = extractAltText(text);
 
@@ -169,12 +173,13 @@ public class EntryTextBuilder {
         return ret;
     }
 
-    private static final Pattern IMAGE_TAG_PATTERN = Pattern.compile(
+    // I had a problem, so I used regular expressions.  Now I have two problems.
+    private static final Pattern ALT_IMAGE_TAG_PATTERN = Pattern.compile(
             "<img(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*(\\s+alt=(?:(?:'([^']*)')|(?:\"([^\"]*)\")))(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*\\s*/?>",
             Pattern.CASE_INSENSITIVE);
     static String extractAltText(String text) {
         Matcher m;
-        while ((m = IMAGE_TAG_PATTERN.matcher(text)).find()) {
+        while ((m = ALT_IMAGE_TAG_PATTERN.matcher(text)).find()) {
             // group 1: ' alt="134"'
             // group 2 or 3: '134'
 
@@ -191,6 +196,51 @@ public class EntryTextBuilder {
         return text;
     }
 
+    private static final Pattern SRC_IMAGE_TAG_PATTERN = Pattern.compile(
+            "<img(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*(\\s+src=(?:(?:'([^']*)')|(?:\"([^\"]*)\")))(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*\\s*/?>",
+            Pattern.CASE_INSENSITIVE);
+    static String stripWebBugs(String text) {
+        Matcher m;
+        int nextPos = 0;
+        while ((m = SRC_IMAGE_TAG_PATTERN.matcher(text)).find(nextPos)) {
+            // group 1: ' src="134"'
+            // group 2 or 3: '134'
+
+            nextPos = m.end();
+
+            String urlText = m.group(2);
+            if (urlText == null) {
+                urlText = m.group(3);
+            }
+            if (matchesWebBug(urlText)) {
+                String pre = text.substring(0, m.start(0));
+                String post = text.substring(m.end(0));
+                // String imgPre = text.substring(m.start(0), m.start(1));
+                // String imgPost = text.substring(m.end(1), m.end(0));
+                text = pre + "<font color='gray'>[<i>bug zapped!</i>]</font>";
+                nextPos = text.length();
+                text += post;
+            }
+        }
+        return text;
+    }
+
+    private static final Pattern[] TRACKER_STYLES = {
+            Pattern.compile("/tracking/[^/]*rss-pixel.png\\?")
+    };
+    static boolean matchesWebBug(String urlText) {
+        if (urlText == null) {
+            return false;
+        }
+        for (Pattern trackerStyle : TRACKER_STYLES) {
+            if (trackerStyle.matcher(urlText).find()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static final Pattern SIMPLE_URL_PATTERN = Pattern.compile(
             "(?:\\s|^)(https?://[^\\s\\[\\]<>]+)(?:\\s|$)",
             Pattern.CASE_INSENSITIVE);
@@ -198,35 +248,31 @@ public class EntryTextBuilder {
     static String convertPlainUrls(String text) {
         // Find all the URLs without any wrapping HTML tags.
         Matcher maybeLink = SIMPLE_URL_PATTERN.matcher(text);
-        if (maybeLink.find()) {
-            int startPos = 0;
-            StringBuilder sb = new StringBuilder();
-            for (int groupId = 1; groupId <= maybeLink.groupCount(); groupId++) {
-                int start = maybeLink.start(groupId);
-                int end = maybeLink.end(groupId);
-                if (! isTagAttribute(text, start, end) && ! isInTag(text, start, end)) {
-                    sb.append(text, startPos, start - 1)
+        int startPos = 0;
+        int nextSearchStart = 0;
+        StringBuilder sb = new StringBuilder();
+        while (maybeLink.find(nextSearchStart)) {
+            int start = maybeLink.start(1);
+            int end = maybeLink.end(1);
+            if (! isTagAttribute(text, start, end) && ! isInTag(text, start, end)) {
+                sb.append(text, startPos, start)
                         .append("<a href='")
                         .append(text, start, end)
-                        .append(">")
+                        .append("'>")
                         .append(text, start, end)
                         .append("</a>");
-                    startPos = end;
-                }
+                startPos = end;
+                nextSearchStart = end;
+            } else {
+                nextSearchStart = end;
             }
-            text = sb.toString();
         }
+        sb.append(text, startPos, text.length());
+        text = sb.toString();
         return text;
     }
 
 
-    // I had a problem, so I used regular expressions.  Now I have two problems.
-    private static final Pattern TAG_START_PATTERN = Pattern.compile(
-            "^<\\s*([A-Z_-]+:)*([A-Z0-9_-]+)(\\s+([A-Z0-9_-]+:)*([A-Z_-]+)(\\s*=\\s*('[^']*')|(\"[^\"]*\")+)?)*\\s+([A-Z0-9_-]+:)*([A-Z0-9_-]+)\\s*=\\s*('|\"|$)",
-            Pattern.CASE_INSENSITIVE);
-    private static final Pattern TAG_END_PATTERN = Pattern.compile(
-            "(^|\"|')(\\s+([A-Z0-9_-]+:)*([A-Z0-9_-]+)(\\s*=\\s*(('[^']*')|(\"[^\"]*\")|([A-Z0-9_:-]+)))?)*\\s*>",
-            Pattern.CASE_INSENSITIVE);
     static boolean isTagAttribute(String src, int start, int end) {
         int prevPos = src.substring(0, start).lastIndexOf('<');
         if (prevPos < 0) {
@@ -238,24 +284,20 @@ public class EntryTextBuilder {
             // not inside the tag that came before it.
             return false;
         }
-        int nextPos = src.indexOf('>', end);
-        if (nextPos <= prevPos) {
+        int nextEndPos = src.indexOf('>', end);
+        if (nextEndPos <= prevPos) {
             // not an enclosed value.
             return false;
         }
-        String postfix = src.substring(end, nextPos + 1);
-
-        // well, a "possible" tag.
-        Matcher preTagMatch = TAG_START_PATTERN.matcher(prefix);
-        if (! preTagMatch.matches()) {
-            return false;
-        }
-        Matcher postTagMatch = TAG_END_PATTERN.matcher(postfix);
-        if (! postTagMatch.matches()) {
+        int nextStartPos = src.indexOf('<', end);
+        if (nextStartPos < nextEndPos) {
+            // the end '>' happens after a '<', so it's ending a different tag.
             return false;
         }
 
-        // Looks to be encased in a wrapper.
+        // We know that the [start, end) string is within a '<' and '>' block.  Rather than
+        // performing complex HTML analysis of this block, we'll just assume that it's within
+        // a tag's attributes.  For full reasons why this is quite complex, see the unit tests.
         return true;
     }
 

@@ -512,7 +512,16 @@ public class EntryActivity extends Activity {
 				link = entryCursor.getString(linkPosition);
                 // TODO if the link is empty, think about instead linking to the feed's URL.
 
-				if (link != null && link.length() > 0) {
+				if (link == null || link.isEmpty()) {
+                    Cursor linkCursor = getContentResolver().query(FeedData.FeedColumns.CONTENT_URI(Integer.toString(feedId)), new String[] {FeedData.FeedColumns._ID, FeedData.FeedColumns.HOMEPAGE}, null, null, null);
+                    if (linkCursor != null) {
+                        if (linkCursor.moveToFirst()) {
+                            link = linkCursor.getString(1);
+                        }
+                        linkCursor.close();
+                    }
+                }
+                if (link != null && ! link.isEmpty()) {
 					urlButton.setEnabled(true);
 					urlButton.setAlpha(BUTTON_ALPHA+20);
 					urlButton.setOnClickListener(new OnClickListener() {

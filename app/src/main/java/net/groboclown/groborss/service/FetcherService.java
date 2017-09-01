@@ -272,6 +272,8 @@ public class FetcherService extends IntentService {
 		int fetchmodePosition = cursor.getColumnIndex(FeedData.FeedColumns.FETCHMODE);
 		
 		int iconPosition = cursor.getColumnIndex(FeedData.FeedColumns.ICON);
+
+		int homepagePosition = cursor.getColumnIndex(FeedData.FeedColumns.HOMEPAGE);
 		
 		boolean imposeUserAgent = !preferences.getBoolean(Strings.SETTINGS_STANDARDUSERAGENT, false);
 

@@ -91,11 +91,13 @@
 
     <string name="settings_category_refresh">Automated refresh</string>
     <string name="settings_enabled">Enabled</string>
+    <string name="settings_refreshenabled">Enable Automated Refresh</string>
     <string name="settings_refreshenabled_description">This setting controls the automatic refresh of all feeds</string>
     <string name="settings_refreshinterval">Refresh interval</string>
     <string name="settings_refreshinterval_description">Interval between two automated refreshes</string>
 
     <string name="settings_category_notofications">Notifications</string>
+    <string name="settings_notificationsenabled">Enable Notifications</string>
     <string name="settings_notificationsenabled_description">Controls the appearance of notifications in case of new feed content</string>
     <string name="settings_notificationsringtone">Ringtone</string>
     <string name="settings_notificationsringtone_description">Select a ringtone that will be played on new feed content</string>
@@ -111,6 +113,8 @@
     <string name="settings_disablepictures_description">Do not show and load any pictures</string>
     <string name="settings_fetchpictures">Download pictures</string>
     <string name="settings_fetchpictures_description">Download all pictures and store them locally</string>
+    <string name="settings_striptrackingpictures">Remove tracking pictures</string>
+    <string name="settings_striptrackingpictures_description">Don\'t allow pictures that match known patterns for tracking the user\'s actions ("web bugs")</string>
     <string name="settings_lighttheme">Light theme</string>
     <string name="settings_lighttheme_description">Use the light theme (application will be restarted)</string>
     <string name="settings_blacktextwhite">Black text on white background</string>
@@ -147,6 +151,7 @@
     <string name="settings_httphttpsredirects_description">Automatically follow http to https and vice versa redirects</string>
     <string name="settings_enableefficientfeedparsing">Efficient feed parsing</string>
     <string name="settings_enableefficientfeedparsing_description">Parsing the feed will be stopped automatically on existing or too old articles</string>
+    <string name="settings_proxy">Proxy</string>
     <string name="settings_proxy_wifionly">Wifi only</string>
     <string name="settings_proxy_wifionly_description">Use Proxy only for wifi</string>
     <string name="settings_proxy_host">Host</string>

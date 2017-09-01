@@ -86,6 +86,8 @@ public final class Strings {
 	public static final String SETTINGS_ENCLOSUREWARNINGSENABLED = "enclosurewarnings.enabled";
 	
 	public static final String SETTINGS_EFFICIENTFEEDPARSING = "efficientfeedparsing";
+
+	public static final String SETTINGS_STRIP_WEB_BUGS = "pictures.stripwebbugs";
 	
 	public static final String ACTION_REFRESHFEEDS = PACKAGE + ".REFRESH";
 	

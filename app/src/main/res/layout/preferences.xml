@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen 
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
     <PreferenceCategory 
         android:title="@string/settings_category_refresh">
         <CheckBoxPreference
-            android:title="@string/settings_enabled"
+            android:title="@string/settings_refreshenabled"
             android:defaultValue="false"
             android:summary="@string/settings_refreshenabled_description"
             android:key="refresh.enabled" />
@@ -37,7 +39,7 @@
     <PreferenceCategory 
         android:title="@string/settings_category_notofications">
         <CheckBoxPreference
-            android:title="@string/settings_enabled"
+            android:title="@string/settings_notificationsenabled"
             android:defaultValue="false"
             android:summary="@string/settings_notificationsenabled_description"
             android:key="notifications.enabled" />
@@ -86,6 +88,12 @@
             android:key="pictures.fetch" 
             android:dependency="pictures.disable"/>
         <CheckBoxPreference
+            android:title="@string/settings_striptrackingpictures"
+            android:defaultValue="false"
+            android:summary="@string/settings_striptrackingpictures_description"
+            android:key="pictures.stripwebbugs"
+            android:dependency="pictures.disable"/>
+        <CheckBoxPreference
             android:title="@string/settings_lighttheme"
             android:defaultValue="false"
             android:summary="@string/settings_lighttheme_description"
@@ -129,7 +137,7 @@
             android:defaultValue="true"
             android:summary="@string/settings_enableefficientfeedparsing_description"
             android:key="efficientfeedparsing" />
-        <PreferenceScreen android:title="Proxy">
+        <PreferenceScreen android:title="@string/settings_proxy">
             <CheckBoxPreference
                 android:key="proxy.enabled"
                 android:title="@string/settings_enabled" />

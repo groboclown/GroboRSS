@@ -49,7 +49,7 @@ public class FeedDataContentProvider extends ContentProvider {
 	
 	private static final String DATABASE_NAME = "groborss.db";
 	
-	private static final int DATABASE_VERSION = 15;
+	private static final int DATABASE_VERSION = 16;
 	
 	private static final int URI_FEEDS = 1;
 	
@@ -183,6 +183,9 @@ public class FeedDataContentProvider extends ContentProvider {
 	        if (oldVersion < 15) {
 	            executeCatchedSQL(database, new StringBuilder(ALTER_TABLE).append(TABLE_ENTRIES).append(ADD).append(FeedData.EntryColumns.AUTHOR).append(' ').append(FeedData.TYPE_TEXT).toString());   
 	        }
+	        if (oldVersion < 16) {
+				executeCatchedSQL(database, new StringBuilder(ALTER_TABLE).append(TABLE_FEEDS).append(ADD).append(FeedData.FeedColumns.HOMEPAGE).append(' ').append(FeedData.TYPE_TEXT).toString());
+			}
 		}
 		
 		private void executeCatchedSQL(SQLiteDatabase database, String query) {

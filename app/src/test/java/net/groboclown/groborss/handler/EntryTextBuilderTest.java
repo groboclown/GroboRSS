@@ -106,6 +106,30 @@ public class EntryTextBuilderTest {
 
 
     @Test
+    public void testConvertPlainUrls_srcSet() {
+        // "srcset" is a list of urls, which makes this hard to manage
+        // with normal html attribute parsing.
+        final String toTest = "<a href='http://place/there'><img src='http://place/link1.jpg' srcset='http://place/link1.jpg 240w, http://place/link2.jpg 640w' /></a>";
+        assertThat(
+                EntryTextBuilder.convertPlainUrls(toTest),
+                is(toTest)
+        );
+    }
+
+
+    @Test
+    public void testConvertPlainUrls_htmlNeedsLink() {
+        // "srcset" is a list of urls, which makes this hard to manage
+        // with normal html attribute parsing.
+        final String toTest = "<i>link http://place/there and</i><b>another http://place/howdy link</b>";
+        assertThat(
+                EntryTextBuilder.convertPlainUrls(toTest),
+                is("<i>link <a href='http://place/there'>http://place/there</a> and</i><b>another <a href='http://place/howdy'>http://place/howdy</a> link</b>")
+        );
+    }
+
+
+    @Test
     public void testIsTagAttribute_startLink() {
         final String toTest = "<a href='http://a.com/b'>";
         assertThat(

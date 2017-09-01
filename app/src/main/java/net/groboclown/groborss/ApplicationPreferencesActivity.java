@@ -37,14 +37,15 @@ import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
-import net.groboclown.groborss.util.ThemeSetting;
 import net.groboclown.groborss.service.RefreshService;
+import net.groboclown.groborss.util.ThemeSetting;
 
 public class ApplicationPreferencesActivity extends PreferenceActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		ThemeSetting.setTheme(this);
 		super.onCreate(savedInstanceState);
+
 		addPreferencesFromResource(R.layout.preferences);
 		
 		Preference preference = findPreference(Strings.SETTINGS_REFRESHENABLED);
