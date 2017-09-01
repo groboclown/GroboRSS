@@ -33,8 +33,8 @@ import android.webkit.WebView;
 
 import net.groboclown.groborss.Strings;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,10 +82,9 @@ public class EntryTextBuilder {
         if (mRendered || mAbstractText == null || mPreferences == null || mUri == null) {
             throw new IllegalStateException();
         }
-        boolean disablePictures = mPreferences.getBoolean(Strings.SETTINGS_DISABLEPICTURES, false);
-        StringBuilder renderedText = prepare(disablePictures);
+        StringBuilder renderedText = prepare();
 
-        if (disablePictures) {
+        if (mPreferences.getBoolean(Strings.SETTINGS_DISABLEPICTURES, false)) {
             webView.getSettings().setBlockNetworkImage(true);
         } else {
             if (webView.getSettings().getBlockNetworkImage()) {
@@ -135,118 +134,191 @@ public class EntryTextBuilder {
     }
 
 
-    StringBuilder prepare(boolean disablePictures) {
-        // loadData does not recognize the encoding without correct html-header
+    private static final Pattern ENDLINE_PATTERN = Pattern.compile(
+            "<((br)|p)(\\s[^/>]*)?/?>"
+    );
 
-        mHasImages = mAbstractText.contains(Strings.IMAGEID_REPLACEMENT);
-        String text = mAbstractText;
-        StringBuilder ret = new StringBuilder();
+    StringBuilder prepare() {
+        boolean disablePictures = mPreferences.getBoolean(Strings.SETTINGS_DISABLEPICTURES, false);
 
-        text = text.replace(Strings.IMAGEID_REPLACEMENT, mEntryId + Strings.IMAGEFILE_IDSEPARATOR);
+        // First up, perform the bbcode replacements before any HTML stuff takes place.
+        String text = convertBBCode(mAbstractText);
 
-        // Simple bbcode converter
-        // Handle this first.
-        text = convertBBCode(text);
-
-        text = convertPlainUrls(text);
-
-        Pattern brP = Pattern.compile("<br[^>]*>");
-        Matcher brM = brP.matcher(text);
+        // Initial \r\n -> <br>, but only if the text doesn't include <br> or <p> already.
+        Matcher brM = ENDLINE_PATTERN.matcher(text);
         if(!brM.find()) {
-            text = text.replaceAll("\n", "<br>");
+            text = text.replaceAll("(\n+)|(\r+)|((\r\n)+)", "<br>");
         }
 
-        if (mHasImages) {
-            text = text.replace(Strings.IMAGEID_REPLACEMENT, mEntryId + Strings.IMAGEFILE_IDSEPARATOR);
-        }
+        // Reset our image storage flag
+        mHasImages = false;
 
-        if (disablePictures) {
-            text = text.replaceAll(Strings.HTML_IMG_REGEX, Strings.EMPTY);
-        }
+        // Next, parse the HTML so we can muck about with it.
+        List<SimpleHtmlParser.HtmlBit> htmlBits = SimpleHtmlParser.parse(text);
+        List<SimpleHtmlParser.HtmlBit> finalBits = new ArrayList<>(htmlBits.size());
+        SimpleHtmlParser.HtmlBit prev = null;
+        for (int i = 0; i < htmlBits.size(); i++) {
+            SimpleHtmlParser.HtmlBit current = htmlBits.get(i);
 
-        if (mPreferences.getBoolean(Strings.SETTINGS_STRIP_WEB_BUGS, false)) {
-            text = stripWebBugs(text);
-        }
-
-        // Show alt text...
-        text = extractAltText(text);
-
-        // For debugging purposes
-        text = text.replaceAll(Strings.HTML_IMG_REGEX, "[$0]");
-
-        ret.append(text);
-        return ret;
-    }
-
-    // I had a problem, so I used regular expressions.  Now I have two problems.
-    private static final Pattern ALT_IMAGE_TAG_PATTERN = Pattern.compile(
-            "<img(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*(\\s+alt=(?:(?:'([^']*)')|(?:\"([^\"]*)\")))(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*\\s*/?>",
-            Pattern.CASE_INSENSITIVE);
-    static String extractAltText(String text) {
-        Matcher m;
-        while ((m = ALT_IMAGE_TAG_PATTERN.matcher(text)).find()) {
-            // group 1: ' alt="134"'
-            // group 2 or 3: '134'
-
-            String pre = text.substring(0, m.start(0));
-            String post = text.substring(m.end(0));
-            String imgPre = text.substring(m.start(0), m.start(1));
-            String altText = m.group(2);
-            if (altText == null) {
-                altText = m.group(3);
-            }
-            String imgPost = text.substring(m.end(1), m.end(0));
-            if (altText == null || altText.isEmpty()) {
-                // strip out the empty alt text.
-                text = pre + imgPre + imgPost + post;
+            if (current.isPlainText()) {
+                handlePlainText(current, prev, finalBits);
+            } else if (current.isStartTag()) {
+                // Special tag handling
+                String tag = current.getTag().toLowerCase();
+                if ("img".equals(tag)) {
+                    // Image tag handling
+                    handleImage(current, prev, finalBits, disablePictures);
+                } else {
+                    // A tag we don't need to mangle; just add it back in.
+                    finalBits.add(current);
+                }
             } else {
-                text = pre + imgPre + imgPost + "<br>[<i>" + altText + "</i>]" + post;
+                // End tags are just added in.
+                finalBits.add(current);
             }
+
+            prev = current;
         }
-        return text;
+
+        return SimpleHtmlParser.toHtml(finalBits);
     }
 
 
-    private static final Pattern IMAGE_TAG_PATTERN = Pattern.compile("<img(.*?)/?>");
-    static String stripWebBugs(String text) {
-        Matcher m;
-        int nextPos = 0;
-        while ((m = IMAGE_TAG_PATTERN.matcher(text)).find(nextPos)) {
-            // group 1: attribute text
 
-            nextPos = m.end();
-
-            Map<String, String> attributes = splitAttributes(m.group(1));
-            if (matchesWebBug(attributes)) {
-                String pre = text.substring(0, m.start(0));
-                String post = text.substring(m.end(0));
-                // String imgPre = text.substring(m.start(0), m.start(1));
-                // String imgPost = text.substring(m.end(1), m.end(0));
-                text = pre + "<font color='gray'>[<i>bug zapped!</i>]</font>";
-                nextPos = text.length();
-                text += post;
-            }
-        }
-        return text;
-    }
-
-    private static final Pattern[] TRACKER_URL_STYLES = {
-            Pattern.compile("/tracking/[^/]*rss-pixel.png\\?")
-    };
-    static boolean matchesWebBug(Map<String, String> attributes) {
-        String urlText = attributes.get("src");
-        if (urlText != null) {
-            for (Pattern trackerStyle : TRACKER_URL_STYLES) {
-                if (trackerStyle.matcher(urlText).find()) {
-                    return true;
+    private static final Pattern SIMPLE_URL_PATTERN = Pattern.compile(
+            "(?:\\s|^)(https?://[^\\s\\[\\]<>]+)(?:\\s|$)",
+            Pattern.CASE_INSENSITIVE);
+    void handlePlainText(SimpleHtmlParser.HtmlBit current,
+             SimpleHtmlParser.HtmlBit prevBit, List<SimpleHtmlParser.HtmlBit> output) {
+        // Note that we can't do a simple "is in" check, because we also need to check
+        // the contents if is in.
+        List<String> previousTagAttributes = new ArrayList<>();
+        if (prevBit != null && prevBit.isHtmlTag()) {
+            prevBit.moveToStart();
+            while (prevBit.nextAttribute()) {
+                String value = prevBit.getCurrentValue();
+                if (value != null && !value.isEmpty()) {
+                    previousTagAttributes.add(value);
                 }
             }
         }
 
-        String height = attributes.get("height");
-        String width = attributes.get("width");
+        String text = current.getTag();
+
+        // Convert '\n', '\r', and '\r\n' to <br>
+        text = text.replaceAll("(\r)|(\n)|(\r\n)", "<br>");
+
+
+        // handle plain text URLs
+        Matcher maybeLink = SIMPLE_URL_PATTERN.matcher(text);
+        int startPos = 0;
+        int nextSearchStart = 0;
+
+        findLoop: while (maybeLink.find(nextSearchStart)) {
+            int start = maybeLink.start(1);
+            int end = maybeLink.end(1);
+            String url = maybeLink.group(1);
+
+            // If the URL is in the previous tag's list of attributes, then assume that this is
+            // a link to the URL and we shouldn't enclose it in another link.
+            for (String attr : previousTagAttributes) {
+                if (attr.contains(url)) {
+                    // keep looking
+                    nextSearchStart = end;
+                    continue findLoop;
+                }
+            }
+
+            // The previous tag does not have this URL in it, and we know it's a plain text URL,
+            // so wrap it up.
+            // Note that if we want to add in the future more plain text manipulation, this
+            // should stick the pulled out code bits into its own list for later parsing.  That
+            // will make adding back into the output ordering difficult, though.
+
+            output.add(SimpleHtmlParser.createSimple(text, startPos, start));
+            output.add(SimpleHtmlParser.createSimple("<a href='" + url + "'>" + url + "</a>"));
+            startPos = end;
+            nextSearchStart = end;
+        }
+
+        if (startPos < text.length()) {
+            output.add(SimpleHtmlParser.createSimple(text, startPos, text.length()));
+        }
+    }
+
+
+
+
+    private static final Pattern[] TRACKER_SRC_URL_STYLES = {
+            Pattern.compile("/tracking/[^/]*rss-pixel.png\\?")
+    };
+
+    private void handleImage(SimpleHtmlParser.HtmlBit current, SimpleHtmlParser.HtmlBit prev, List<SimpleHtmlParser.HtmlBit> output, boolean disablePictures) {
+        // Disabled pictures means we don't add the current bit to the output.
+        if (disablePictures) {
+            return;
+        }
+
+
+        // Remove web bugs
+        String src = current.getAttributeValue("src");
+        if (mPreferences.getBoolean(Strings.SETTINGS_STRIP_WEB_BUGS, false) && isWebBug(current, src)) {
+            // Replace the web bug with fun text.
+            // TODO make this a String.
+            output.add(SimpleHtmlParser.createSimple("<font color='gray'><smaller><i>Bug Zapped!</i></smaller></font>"));
+            // Nothing else to do
+            return;
+        }
+
+
+        // Cached image management
+        if (src.contains(Strings.IMAGEID_REPLACEMENT)) {
+            mHasImages = true;
+            current.addExtra("src", src.replace(Strings.IMAGEID_REPLACEMENT, mEntryId + Strings.IMAGEFILE_IDSEPARATOR));
+        }
+
+
+        // Show the "alt" and "title" values to the user.
+        // This needs to be last, because it inserts the image into the stream on a match.
+        String altText = null;
+        current.moveToStart();
+        while (current.nextAttribute()) {
+            String key = current.getCurrentKey();
+            if ("alt".equalsIgnoreCase(key)) {
+                altText = current.getCurrentValue();
+                current.removeCurrent();
+            } else if ("title".equalsIgnoreCase(key)) {
+                altText = current.getCurrentValue();
+                current.removeCurrent();
+            }
+        }
+        if (altText != null && !altText.isEmpty()) {
+            // We've stripped out the alt text, now add it as the next element.
+            output.add(current);
+            output.add(SimpleHtmlParser.createSimple("<br><font color='gray'><smaller><i>" + altText + "</i></smaller></font>"));
+            // Because we just processed the tag, we can't continue to other processing.
+            return;
+        }
+
+        // Completed processing.  The final image can be just added in.
+        output.add(current);
+    }
+
+    private static boolean isWebBug(SimpleHtmlParser.HtmlBit bit, String srcAttrValue) {
+        // Web Bug image size check - the first giveaway.
+        String height = bit.getAttributeValue("height");
+        String width = bit.getAttributeValue("width");
         if (isWebBugSize(height) && isWebBugSize(width)) {
             return true;
+        }
+
+        // Check if the URL matches anything we know.
+        if (srcAttrValue != null) {
+            for (Pattern trackerStyle : TRACKER_SRC_URL_STYLES) {
+                if (trackerStyle.matcher(srcAttrValue).find()) {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -260,191 +332,6 @@ public class EntryTextBuilder {
         return "1".equals(size) || "1px".equals(size);
     }
 
-    private static Map<String, String> splitAttributes(String text) {
-        Map<String, String> ret = new HashMap<>();
-        StringBuilder key = new StringBuilder();
-        StringBuilder value = new StringBuilder();
-        int state = 0;
-        for (char c: text.toCharArray()) {
-            switch (state) {
-                case 0:
-                    // Between attributes
-                    if (c == '=') {
-                        // weird state.  No key.
-                        key.append("(no key)");
-                        state = 3;
-                    } else if (!Character.isWhitespace(c)) {
-                        key.append(c);
-                        state = 1;
-                    }
-                    // else keep searching
-                    break;
-                case 1:
-                    // in a key
-                    if (c == '=') {
-                        state = 3;
-                    } else if (Character.isWhitespace(c)) {
-                        state = 2;
-                    } else {
-                        key.append(c);
-                    }
-                    break;
-                case 2:
-                    // space after key
-                    if (c == '=') {
-                        state = 3;
-                    } else if (! Character.isWhitespace(c)) {
-                        // key with no value
-                        ret.put(key.toString().toLowerCase(), "true");
-                        key.setLength(0);
-                        key.append(c);
-                        state = 1;
-                    }
-                    // else it's whitespace so keep searching
-                    break;
-                case 3:
-                    // after equals, looking for value start
-                    if (c == '\'') {
-                        state = 4;
-                    } else if (c == '"') {
-                        state = 5;
-                    } else if (c == '=') {
-                        // weird state
-                        // ignore the character.
-                        state = 3;
-                    } else if (! Character.isWhitespace(c)) {
-                        state = 6;
-                    }
-                    // else it's whitespace, so keep searching
-                    break;
-                case 4:
-                    // single quoted value
-                    if (c == '\'') {
-                        // end of key/value
-                        ret.put(key.toString().toLowerCase(), value.toString());
-                        key.setLength(0);
-                        value.setLength(0);
-                        state = 0;
-                    } else {
-                        value.append(c);
-                    }
-                    break;
-                case 5:
-                    // double quoted value
-                    if (c == '"') {
-                        // end of key/value
-                        ret.put(key.toString().toLowerCase(), value.toString());
-                        key.setLength(0);
-                        value.setLength(0);
-                        state = 0;
-                    } else {
-                        value.append(c);
-                    }
-                    break;
-                case 6:
-                    // unquoted value; separated by spaces
-                    if (Character.isWhitespace(c)) {
-                        // end of key/value
-                        ret.put(key.toString().toLowerCase(), value.toString());
-                        key.setLength(0);
-                        value.setLength(0);
-                        state = 0;
-                    } else {
-                        value.append(c);
-                    }
-                    break;
-            }
-        }
-        return ret;
-    }
-
-    private static final Pattern SIMPLE_URL_PATTERN = Pattern.compile(
-            "(?:\\s|^)(https?://[^\\s\\[\\]<>]+)(?:\\s|$)",
-            Pattern.CASE_INSENSITIVE);
-
-    static String convertPlainUrls(String text) {
-        // Find all the URLs without any wrapping HTML tags.
-        Matcher maybeLink = SIMPLE_URL_PATTERN.matcher(text);
-        int startPos = 0;
-        int nextSearchStart = 0;
-        StringBuilder sb = new StringBuilder();
-        while (maybeLink.find(nextSearchStart)) {
-            int start = maybeLink.start(1);
-            int end = maybeLink.end(1);
-            if (! isTagAttribute(text, start, end) && ! isInTag(text, start, end)) {
-                sb.append(text, startPos, start)
-                        .append("<a href='")
-                        .append(text, start, end)
-                        .append("'>")
-                        .append(text, start, end)
-                        .append("</a>");
-                startPos = end;
-                nextSearchStart = end;
-            } else {
-                nextSearchStart = end;
-            }
-        }
-        sb.append(text, startPos, text.length());
-        text = sb.toString();
-        return text;
-    }
-
-
-    static boolean isTagAttribute(String src, int start, int end) {
-        int prevPos = src.substring(0, start).lastIndexOf('<');
-        if (prevPos < 0) {
-            // not inside a tag.
-            return false;
-        }
-        String prefix = src.substring(prevPos, start);
-        if (prefix.indexOf('>') > 0) {
-            // not inside the tag that came before it.
-            return false;
-        }
-        int nextEndPos = src.indexOf('>', end);
-        if (nextEndPos <= prevPos) {
-            // not an enclosed value.
-            return false;
-        }
-        int nextStartPos = src.indexOf('<', end);
-        if (nextStartPos < nextEndPos) {
-            // the end '>' happens after a '<', so it's ending a different tag.
-            return false;
-        }
-
-        // We know that the [start, end) string is within a '<' and '>' block.  Rather than
-        // performing complex HTML analysis of this block, we'll just assume that it's within
-        // a tag's attributes.  For full reasons why this is quite complex, see the unit tests.
-        return true;
-    }
-
-
-    static boolean isInTag(String src, int start, int end) {
-        int prevTagStart = src.substring(0, start).lastIndexOf('<');
-        if (prevTagStart < 0) {
-            // not inside a tag.
-            return false;
-        }
-        int prevTagEnd = src.indexOf('>', prevTagStart);
-        if (prevTagEnd >= start) {
-            // not enclosed in a tag.
-            return false;
-        }
-        int nextTagStart = src.indexOf('<', end);
-        if (nextTagStart < 0) {
-            // no tailing tag after this.
-            return false;
-        }
-
-        // Now we need to ensure that the given URL is referenced inside the start tag.
-        // If it's not, then we'll enclose it in another link.  This could get weird if
-        // a link points to a different URL than the text.
-
-        String tag = src.substring(prevTagStart, prevTagEnd + 1);
-        String url = src.substring(start, end);
-        return tag.contains(url);
-    }
-
 
     // A trivial BBCode converter.  Implemented such that it doesn't
     // interfere with the HTML stuff.
@@ -456,5 +343,7 @@ public class EntryTextBuilder {
                 .replaceAll("(?i)\\[code\\]([^\\]]*)\\[/code\\]", "<pre>$1</pre>")
                 .replaceAll("(?i)\\[/?(center|color|size|img|url|pre)[^\\]]*\\]", "");
     }
+
+
 
 }
