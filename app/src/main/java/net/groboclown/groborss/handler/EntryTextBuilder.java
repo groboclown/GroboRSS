@@ -205,10 +205,6 @@ public class EntryTextBuilder {
 
         String text = current.getTag();
 
-        // Convert '\n', '\r', and '\r\n' to <br>
-        text = text.replaceAll("(\r)|(\n)|(\r\n)", "<br>");
-
-
         // handle plain text URLs
         Matcher maybeLink = SIMPLE_URL_PATTERN.matcher(text);
         int startPos = 0;
