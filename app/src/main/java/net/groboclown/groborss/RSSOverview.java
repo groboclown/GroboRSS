@@ -66,6 +66,10 @@ import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.provider.OPML;
 import net.groboclown.groborss.service.RefreshService;
 
+// TODO "ListActivity" is essentially deprecated.
+// Need to use an AppCompatActivity, add a toolbar for the
+// action bar, then use a ListFragment for the list contents.
+// All this just to get those action buttons back on top.
 public class RSSOverview extends ListActivity {
 	public static final int DIALOG_ERROR_FEEDIMPORT = 3;
 	
