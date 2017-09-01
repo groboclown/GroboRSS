@@ -33,6 +33,8 @@ import android.webkit.WebView;
 
 import net.groboclown.groborss.Strings;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -205,23 +207,17 @@ public class EntryTextBuilder {
     }
 
 
-    private static final Pattern SRC_IMAGE_TAG_PATTERN = Pattern.compile(
-            "<img(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*(\\s+src=(?:(?:'([^']*)')|(?:\"([^\"]*)\")))(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*\\s*/?>",
-            Pattern.CASE_INSENSITIVE);
+    private static final Pattern IMAGE_TAG_PATTERN = Pattern.compile("<img(.*?)/?>");
     static String stripWebBugs(String text) {
         Matcher m;
         int nextPos = 0;
-        while ((m = SRC_IMAGE_TAG_PATTERN.matcher(text)).find(nextPos)) {
-            // group 1: ' src="134"'
-            // group 2 or 3: '134'
+        while ((m = IMAGE_TAG_PATTERN.matcher(text)).find(nextPos)) {
+            // group 1: attribute text
 
             nextPos = m.end();
 
-            String urlText = m.group(2);
-            if (urlText == null) {
-                urlText = m.group(3);
-            }
-            if (matchesWebBug(urlText)) {
+            Map<String, String> attributes = splitAttributes(m.group(1));
+            if (matchesWebBug(attributes)) {
                 String pre = text.substring(0, m.start(0));
                 String post = text.substring(m.end(0));
                 // String imgPre = text.substring(m.start(0), m.start(1));
@@ -234,20 +230,132 @@ public class EntryTextBuilder {
         return text;
     }
 
-    private static final Pattern[] TRACKER_STYLES = {
+    private static final Pattern[] TRACKER_URL_STYLES = {
             Pattern.compile("/tracking/[^/]*rss-pixel.png\\?")
     };
-    static boolean matchesWebBug(String urlText) {
-        if (urlText == null) {
-            return false;
-        }
-        for (Pattern trackerStyle : TRACKER_STYLES) {
-            if (trackerStyle.matcher(urlText).find()) {
-                return true;
+    static boolean matchesWebBug(Map<String, String> attributes) {
+        String urlText = attributes.get("src");
+        if (urlText != null) {
+            for (Pattern trackerStyle : TRACKER_URL_STYLES) {
+                if (trackerStyle.matcher(urlText).find()) {
+                    return true;
+                }
             }
         }
 
+        String height = attributes.get("height");
+        String width = attributes.get("width");
+        if (isWebBugSize(height) && isWebBugSize(width)) {
+            return true;
+        }
+
         return false;
+    }
+
+    private static boolean isWebBugSize(String size) {
+        if (size == null) {
+            return false;
+        }
+        size = size.toLowerCase();
+        return "1".equals(size) || "1px".equals(size);
+    }
+
+    private static Map<String, String> splitAttributes(String text) {
+        Map<String, String> ret = new HashMap<>();
+        StringBuilder key = new StringBuilder();
+        StringBuilder value = new StringBuilder();
+        int state = 0;
+        for (char c: text.toCharArray()) {
+            switch (state) {
+                case 0:
+                    // Between attributes
+                    if (c == '=') {
+                        // weird state.  No key.
+                        key.append("(no key)");
+                        state = 3;
+                    } else if (!Character.isWhitespace(c)) {
+                        key.append(c);
+                        state = 1;
+                    }
+                    // else keep searching
+                    break;
+                case 1:
+                    // in a key
+                    if (c == '=') {
+                        state = 3;
+                    } else if (Character.isWhitespace(c)) {
+                        state = 2;
+                    } else {
+                        key.append(c);
+                    }
+                    break;
+                case 2:
+                    // space after key
+                    if (c == '=') {
+                        state = 3;
+                    } else if (! Character.isWhitespace(c)) {
+                        // key with no value
+                        ret.put(key.toString().toLowerCase(), "true");
+                        key.setLength(0);
+                        key.append(c);
+                        state = 1;
+                    }
+                    // else it's whitespace so keep searching
+                    break;
+                case 3:
+                    // after equals, looking for value start
+                    if (c == '\'') {
+                        state = 4;
+                    } else if (c == '"') {
+                        state = 5;
+                    } else if (c == '=') {
+                        // weird state
+                        // ignore the character.
+                        state = 3;
+                    } else if (! Character.isWhitespace(c)) {
+                        state = 6;
+                    }
+                    // else it's whitespace, so keep searching
+                    break;
+                case 4:
+                    // single quoted value
+                    if (c == '\'') {
+                        // end of key/value
+                        ret.put(key.toString().toLowerCase(), value.toString());
+                        key.setLength(0);
+                        value.setLength(0);
+                        state = 0;
+                    } else {
+                        value.append(c);
+                    }
+                    break;
+                case 5:
+                    // double quoted value
+                    if (c == '"') {
+                        // end of key/value
+                        ret.put(key.toString().toLowerCase(), value.toString());
+                        key.setLength(0);
+                        value.setLength(0);
+                        state = 0;
+                    } else {
+                        value.append(c);
+                    }
+                    break;
+                case 6:
+                    // unquoted value; separated by spaces
+                    if (Character.isWhitespace(c)) {
+                        // end of key/value
+                        ret.put(key.toString().toLowerCase(), value.toString());
+                        key.setLength(0);
+                        value.setLength(0);
+                        state = 0;
+                    } else {
+                        value.append(c);
+                    }
+                    break;
+            }
+        }
+        return ret;
     }
 
     private static final Pattern SIMPLE_URL_PATTERN = Pattern.compile(
