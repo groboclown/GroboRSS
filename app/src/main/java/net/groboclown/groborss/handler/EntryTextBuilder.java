@@ -169,6 +169,9 @@ public class EntryTextBuilder {
         // Show alt text...
         text = extractAltText(text);
 
+        // For debugging purposes
+        text = text.replaceAll(Strings.HTML_IMG_REGEX, "[$0]");
+
         ret.append(text);
         return ret;
     }
@@ -191,10 +194,16 @@ public class EntryTextBuilder {
                 altText = m.group(3);
             }
             String imgPost = text.substring(m.end(1), m.end(0));
-            text = pre + imgPre + imgPost + "<br>[<i>" + altText + "</i>]" + post;
+            if (altText == null || altText.isEmpty()) {
+                // strip out the empty alt text.
+                text = pre + imgPre + imgPost + post;
+            } else {
+                text = pre + imgPre + imgPost + "<br>[<i>" + altText + "</i>]" + post;
+            }
         }
         return text;
     }
+
 
     private static final Pattern SRC_IMAGE_TAG_PATTERN = Pattern.compile(
             "<img(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*(\\s+src=(?:(?:'([^']*)')|(?:\"([^\"]*)\")))(?:\\s+[A-Z0-9_:-]+(?:\\s*=\\s*(?:(?:'[^']*')|(?:\"[^\"]*\"))))*\\s*/?>",
