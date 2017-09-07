@@ -1,7 +1,7 @@
 # GroboRSS Android RSS Reader Program
 ![Travis Build Status](https://travis-ci.org/groboclown/GroboRSS.svg?branch=master)
 
-Please see the [changes][CHANGES.md] list for full details on new options.
+Please see the [changes](CHANGES.md) list for full details on new options.
 Documentation and screenshots should be coming soon.
 
 Based on *Sparse rss* Copyright (c) 2010-2012 Stefan Handschuh
