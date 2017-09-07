@@ -29,6 +29,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.Html;
 import android.util.Log;
@@ -52,7 +53,10 @@ import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -149,7 +153,8 @@ public class RSSHandler extends DefaultHandler {
 	
 	private static final StringBuilder DB_FAVORITE  = new StringBuilder(" AND (").append(Strings.DB_EXCUDEFAVORITE).append(')');
 
-	private static Pattern imgPattern = Pattern.compile("<img src=\\s*['\"]([^'\"]+)['\"][^>]*>"); // middle () is group 1; s* is important for non-whitespaces; ' also usable
+    // middle () is group 1; s* is important for non-whitespaces; ' also usable
+	private static final Pattern IMG_PATTERN = Pattern.compile("<img src=\\s*['\"]([^'\"]+)['\"][^>]*>");
 	
 	private Context context;
 	
@@ -222,7 +227,10 @@ public class RSSHandler extends DefaultHandler {
 	private StringBuilder author;
 	
 	private boolean nameTagEntered;
-	private Pattern entryLinkImagePattern;
+
+    @NonNull
+	private List<Pattern> entryLinkImagePattern = Collections.emptyList();
+
     private HttpDownload.Factory httpDownloadFactory;
 
     public RSSHandler(Context context) {
@@ -502,7 +510,7 @@ public class RSSHandler extends DefaultHandler {
                         if (fetchImages) {
                             images = new Vector<>(4);
 
-                            Matcher matcher = imgPattern.matcher(description);
+                            Matcher matcher = IMG_PATTERN.matcher(description);
 
                             while (matcher.find()) {
                                 String match = matcher.group(1).replace(Strings.SPACE, Strings.URL_SPACE);
@@ -517,37 +525,77 @@ public class RSSHandler extends DefaultHandler {
                             }
                         }
 
-                        String imageUrl = getLinkedImageUrl(entryLinkString);
-                        if (imageUrl != null) {
+                        String[] imageUrlAndAltText = getLinkedImageUrlAndAltText(entryLinkString);
+                        StringBuilder addlDescription = new StringBuilder();
+                        StringBuilder pullSrcText = new StringBuilder();
+                        if (imageUrlAndAltText[0] != null) {
                             // TODO move HTML markup to Strings.
-                            descriptionString += "<p><img src='";
+                            addlDescription.append("<img src='");
                             if (fetchImages) {
-                                images.add(imageUrl);
-                                descriptionString += Strings.FILEURL
-                                        + FeedDataContentProvider.IMAGEFOLDER
-                                        + Strings.IMAGEID_REPLACEMENT
-                                        + imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+                                images.add(imageUrlAndAltText[0]);
+                                addlDescription
+                                        .append(Strings.FILEURL)
+                                        .append(FeedDataContentProvider.IMAGEFOLDER)
+                                        .append(Strings.IMAGEID_REPLACEMENT)
+                                        .append(
+                                                imageUrlAndAltText[0].substring(
+                                                        imageUrlAndAltText[0].lastIndexOf('/') + 1));
                             } else {
-                                descriptionString += imageUrl;
+                                addlDescription.append(imageUrlAndAltText[0]);
                             }
-                            descriptionString += "'><br><font color='gray'><smaller><i>image pulled from RSS entry link</i></smaller></font></p>";
-                            values.put(FeedData.EntryColumns.ABSTRACT, descriptionString);
-                        } else if (entryLinkImagePattern != null && ! entryLinkImagePattern.pattern().isEmpty()) {
+                            addlDescription.append("'>");
+                            pullSrcText.append("<font color='gray'><smaller><i>image pulled from RSS entry link</i></smaller></font>");
+                        } else if (! entryLinkImagePattern.isEmpty()) {
                             // Want an image for this feed, but didn't find one.
                             // Note that official escaping HTML is not supported earlier than v16.
-                            // String patternHtml = Html.escapeHtml(entryLinkImagePattern.pattern());
-                            String patternHtml = entryLinkImagePattern.pattern()
-                                    .replace("&", "&amp;")
-                                    .replace("<", "&lt;")
-                                    .replace(">", "&gt;")
-                                    // everything else should be mostly fine
-                                    ;
-                            descriptionString += "<p><font color='gray'><smaller><i>pattern <tt>" + patternHtml + "</tt> not found in link</i></smaller></font></p>";
-                            values.put(FeedData.EntryColumns.ABSTRACT, descriptionString);
+                            StringBuilder patternText = new StringBuilder();
+                            String sep = "";
+                            for (Pattern pattern : entryLinkImagePattern) {
+                                // String patternHtml = Html.escapeHtml(entryLinkImagePattern.pattern());
+                                String patternHtml = pattern.pattern()
+                                        .replace("&", "&amp;")
+                                        .replace("<", "&lt;")
+                                        .replace(">", "&gt;")
+                                        // everything else should be mostly fine
+                                        .trim();
+                                if (! patternHtml.isEmpty()) {
+                                    patternText
+                                            .append(sep)
+                                            .append("<tt>")
+                                            .append(patternHtml)
+                                            .append("</tt>");
+                                    sep = ", ";
+                                }
+                            }
+                            if (patternText.length() > 0) {
+                                pullSrcText
+                                        .append("<font color='gray'><smaller><i>pattern(s) ")
+                                        .append(patternText)
+                                        .append(" not found in link</i></smaller></font>");
+                            }
                         }
 
-
-                        values.put(FeedData.EntryColumns.ABSTRACT, descriptionString);
+                        if (addlDescription.length() > 0 && pullSrcText.length() > 0) {
+                            addlDescription.insert(0, "<p>");
+                            if (imageUrlAndAltText[1] != null) {
+                                if (addlDescription.length() > 3) {
+                                    addlDescription.append("<br>");
+                                }
+                                addlDescription
+                                        .append("<font color='gray'><smaller><i>")
+                                        .append(imageUrlAndAltText[1])
+                                        .append("</i></smaller></font>");
+                            }
+                            if (pullSrcText.length() > 0) {
+                                addlDescription
+                                        .append("<br>")
+                                        .append(pullSrcText);
+                            }
+                            addlDescription.append("</p>");
+                            values.put(
+                                    FeedData.EntryColumns.ABSTRACT,
+                                    descriptionString + addlDescription);
+                        }
                     }
                 }
 
@@ -627,22 +675,40 @@ public class RSSHandler extends DefaultHandler {
 		}
 	}
 
-    private String getLinkedImageUrl(String entryLinkString) {
-        if (entryLinkImagePattern != null && ! entryLinkString.isEmpty() &&
+	@NonNull
+    private String[] getLinkedImageUrlAndAltText(String entryLinkString) {
+        if (!entryLinkImagePattern.isEmpty() && !entryLinkString.isEmpty() &&
                 !entryLinkString.isEmpty() && httpDownloadFactory != null) {
             // Fetch the URL at the link and search for the pattern.
             String imageUrl = null;
+            String imageAltText = null;
             URL referred = null;
             try {
                 HttpDownload connection = httpDownloadFactory.connect(entryLinkString);
                 if (connection != null) {
                     referred = connection.getURL();
+                    imgSearch:
                     for (SimpleHtmlParser.HtmlBit bit : SimpleHtmlParser.parse(connection.getAsString(false))) {
                         if (bit.isStartTag() && "img".equalsIgnoreCase(bit.getTag())) {
                             String src = bit.getAttributeValue("src");
-                            if (src != null && entryLinkImagePattern.matcher(src).matches()) {
-                                imageUrl = src;
-                                break;
+                            if (src != null) {
+                                for (Pattern pattern : entryLinkImagePattern) {
+                                    if (pattern.matcher(src).matches()) {
+                                        imageUrl = src;
+                                        String alt = bit.getAttributeValue("alt");
+                                        if (alt == null) {
+                                            alt = bit.getAttributeValue("title");
+                                        }
+                                        if (alt != null) {
+                                            alt = alt.trim();
+                                            if (alt.isEmpty()) {
+                                                alt = null;
+                                            }
+                                        }
+                                        imageAltText = alt;
+                                        break imgSearch;
+                                    }
+                                }
                             }
                         }
                     }
@@ -686,10 +752,13 @@ public class RSSHandler extends DefaultHandler {
                     }
                 }
 
-                return imageUrl.replace(Strings.SPACE, Strings.URL_SPACE);
+                return new String[] {
+                        imageUrl.replace(Strings.SPACE, Strings.URL_SPACE),
+                        imageAltText
+                };
             }
         }
-        return null;
+        return new String[] { null, null };
     }
 
     public int getNewCount() {
@@ -787,12 +856,17 @@ public class RSSHandler extends DefaultHandler {
 	// TODO BIG HACK
 	public void setEntryLinkImagePattern(@Nullable String entryLinkImagePattern) {
         if (entryLinkImagePattern == null) {
-            this.entryLinkImagePattern = null;
+            this.entryLinkImagePattern = Collections.emptyList();
         } else {
-            try {
-                this.entryLinkImagePattern = Pattern.compile(entryLinkImagePattern);
-            } catch (PatternSyntaxException e) {
-                Log.w(LOG_TAG, "Could not parse regular expression " + entryLinkImagePattern, e);
+            String[] patterns = entryLinkImagePattern.split(",");
+            this.entryLinkImagePattern = new ArrayList<>(patterns.length);
+            for (String patternStr : patterns) {
+                try {
+                    Pattern pattern = Pattern.compile(patternStr);
+                    this.entryLinkImagePattern.add(pattern);
+                } catch (PatternSyntaxException e) {
+                    Log.w(LOG_TAG, "Could not parse regular expression " + patternStr, e);
+                }
             }
         }
 	}

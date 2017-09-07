@@ -9,6 +9,7 @@
 * Migrated to modern Android development environment.
 * Enhanced feed entry viewing.
 * Overview enhancements.
+* Feed view enhancements.
 * Bug fixes.
 
 ### Details
@@ -43,9 +44,14 @@
         The scope of this is beyond this document.
 * Overview enhancements.
     * Made the "refresh" button first on the list.
+* Feed view enhancements.
+    * Added "Edit" and "Additional settings" to the feed list view's menu.  It used
+        to be that the only place to edit these settings was the unwieldy hold press
+        context menu on the overview.  This should make the editing a bit more user
+        friendly.
 * Bugs fixes:
     * Fixed a crash that occurred when a feed item had no text and no link.
     * Fixed issues with showing images embedded in the feed entry.  Some of the
-      old conversions would not keep the URL correctly, or sometimes aggressively
-      wrap URLs in links when they are already in links.
+        old conversions would not keep the URL correctly, or sometimes aggressively
+        wrap URLs in links when they are already in links.
     * Preferences now have more descriptive names for the enable/disable options.

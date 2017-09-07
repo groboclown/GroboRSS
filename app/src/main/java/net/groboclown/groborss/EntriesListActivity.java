@@ -78,6 +78,8 @@ public class EntriesListActivity extends ListActivity {
 	private Uri uri;
 	
 	private EntriesListAdapter entriesListAdapter;
+
+	private long feedId;
 	
 	private byte[] iconBytes;
 	
@@ -92,7 +94,7 @@ public class EntriesListActivity extends ListActivity {
 		
 		Intent intent = getIntent();
 		
-		long feedId = intent.getLongExtra(FeedData.FeedColumns._ID, 0);
+		feedId = intent.getLongExtra(FeedData.FeedColumns._ID, 0);
 		
 		if (feedId > 0) {
 			Cursor cursor = getContentResolver().query(FeedData.FeedColumns.CONTENT_URI(feedId), FEED_PROJECTION, null, null, null);
@@ -241,6 +243,14 @@ public class EntriesListActivity extends ListActivity {
 		        });
 				builder.setNegativeButton(android.R.string.no, null);
 				builder.show();
+				break;
+			}
+			case R.id.menu_settings: {
+				startActivity(new Intent(Intent.ACTION_EDIT).setData(FeedData.FeedColumns.CONTENT_URI(feedId)));
+				break;
+			}
+			case R.id.menu_addl_settings: {
+				startActivity(new Intent(this, FeedPrefsActivity.class).putExtra(FeedData.FeedColumns._ID, Long.toString(feedId)));
 				break;
 			}
 			case CONTEXTMENU_MARKASREAD_ID: {

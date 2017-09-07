@@ -1,6 +1,8 @@
 package net.groboclown.groborss;
 
 import net.groboclown.groborss.provider.FeedData;
+import net.groboclown.groborss.util.ThemeSetting;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -12,7 +14,9 @@ import android.preference.Preference.OnPreferenceChangeListener;
 public class FeedPrefsActivity extends PreferenceActivity {
 
 	public void onCreate(Bundle savedInstanceState) {
+		ThemeSetting.setTheme(this);
 		super.onCreate(savedInstanceState);
+
 		addPreferencesFromResource(R.xml.feedsettings);
 		
 		final String feedId = getIntent().getStringExtra(FeedData.FeedColumns._ID);

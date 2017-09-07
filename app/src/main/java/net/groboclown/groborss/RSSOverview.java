@@ -414,7 +414,7 @@ public class RSSOverview extends ListActivity {
 				getContentResolver().update(FeedData.FeedColumns.CONTENT_URI(Long.toString(((AdapterView.AdapterContextMenuInfo) item.getMenuInfo()).id)), values, null, null);
 				break;
 			}
-				
+
 			case R.id.menu_settings: {
 				startActivityForResult(new Intent(this, ApplicationPreferencesActivity.class), ACTIVITY_APPLICATIONPREFERENCES_ID);
 				break;

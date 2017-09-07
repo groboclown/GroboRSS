@@ -19,5 +19,11 @@
         <item android:id="@+id/menu_deleteallentries"
             android:icon="@android:drawable/ic_menu_delete"
             android:title="@string/contextmenu_deleteallentries"/>
+        <item android:id="@+id/menu_settings"
+              android:icon="@android:drawable/ic_menu_preferences"
+              android:title="@string/contextmenu_edit"/>
+        <item android:id="@+id/menu_addl_settings"
+              android:icon="@android:drawable/ic_menu_preferences"
+              android:title="@string/contextmenu_settings"/>
     </group>
 </menu>
