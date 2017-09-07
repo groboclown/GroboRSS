@@ -1,17 +1,43 @@
-language: java
+language: android
 
-dist: trusty
+android:
+  components:
+    # Use latest rev of the Android SDK tools
+    - tools
+    - platform-tools
+    - tools
+    # "tools" appears twice; it's required to get the newest Android SDK tools.
+
+    # Build tools version of the project
+    - build-tools-26.0.1
+
+    # Target SDK
+    - android-14
+
+    # Additional components
+    - extra-android-m2repository
+    - extra-google-m2repository
+
+    # System image for emulator executions in test
+    - sys-img-armeabi-v7a-android-14
+
+
+# Gradle cache boilerplate
 
 before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
-
 cache:
   directories:
-    - $HOME/.gradle/caches
-    - $HOME/.gradle/wrapper
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
 
-jdk:
-  - oraclejdk8
 
-sudo: false
+# Emulator stuff
+
+# before_script:
+#   - echo no | android create avd --force -n test -t android-14 --abi armeabi-v7a
+#   - emulator -avd test -no-audio -no-window &
+#   - android-wait-for-emulator
+#   - adb shell input keyevent 82 &
