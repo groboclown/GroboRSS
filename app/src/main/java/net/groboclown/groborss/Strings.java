@@ -187,4 +187,5 @@ public final class Strings {
 	
 	public static final String SCHEDULED = "scheduled";
 
+	public static final String BUG_ZAPPED_HTML = "<font color='gray'><smaller><i>Bug Zapped!</i></smaller></font>";
 }

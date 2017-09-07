@@ -260,8 +260,9 @@ public class EntryTextBuilder {
         String src = current.getAttributeValue("src");
         if (mPreferences.getBoolean(Strings.SETTINGS_STRIP_WEB_BUGS, false) && isWebBug(current, src)) {
             // Replace the web bug with fun text.
-            // TODO make this a String.
-            output.add(SimpleHtmlParser.createSimple("<font color='gray'><smaller><i>Bug Zapped!</i></smaller></font>"));
+            // TODO make this a String values.xml entry.
+            // but that requires a context.
+            output.add(SimpleHtmlParser.createSimple(Strings.BUG_ZAPPED_HTML));
             // Nothing else to do
             return;
         }

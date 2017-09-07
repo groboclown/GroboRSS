@@ -32,22 +32,24 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import net.groboclown.groborss.provider.FeedData;
 
 public class FeedConfigActivity extends Activity {
 	private static final String WASACTIVE = "wasactive";
 	
-	private static final String[] PROJECTION = new String[] {FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY};
+	private static final String[] PROJECTION = new String[] {FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY, FeedData.FeedColumns.ENTRY_LINK_IMG_PATTERN};
 	
 	private EditText nameEditText;
 	
 	private EditText urlEditText;
 	
 	private CheckBox refreshOnlyWifiCheckBox;
+
+	private EditText entryLinkImgPattern;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,14 +60,15 @@ public class FeedConfigActivity extends Activity {
 		
 		Intent intent = getIntent();
 		
-		nameEditText = (EditText) findViewById(R.id.feed_title);
-		urlEditText = (EditText) findViewById(R.id.feed_url);
-		refreshOnlyWifiCheckBox = (CheckBox) findViewById(R.id.wifionlycheckbox);
+		nameEditText = findViewById(R.id.feed_title);
+		urlEditText = findViewById(R.id.feed_url);
+		refreshOnlyWifiCheckBox = findViewById(R.id.wifionlycheckbox);
+		entryLinkImgPattern = findViewById(R.id.feed_entry_link_img_pattern);
 			
 		if (intent.getAction().equals(Intent.ACTION_INSERT)) {
 			setTitle(R.string.newfeed_title);
 			restoreInstanceState(savedInstanceState);
-			((Button) findViewById(R.id.button_ok)).setOnClickListener(new OnClickListener() {
+			findViewById(R.id.button_ok).setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					String url = urlEditText.getText().toString();
 					
@@ -85,10 +88,15 @@ public class FeedConfigActivity extends Activity {
 						values.put(FeedData.FeedColumns.WIFIONLY, refreshOnlyWifiCheckBox.isChecked() ? 1 : 0);
 						values.put(FeedData.FeedColumns.URL, url);
 						values.put(FeedData.FeedColumns.ERROR, (String) null);
+
+						String linkImgPattern = entryLinkImgPattern.getText().toString();
+						if (linkImgPattern.trim().length() > 0) {
+							values.put(FeedData.FeedColumns.ENTRY_LINK_IMG_PATTERN, linkImgPattern);
+						}
 						
 						String name = nameEditText.getText().toString();
 						
-						if (name.trim().length() > 0) {
+						if (! name.trim().isEmpty()) {
 							values.put(FeedData.FeedColumns.NAME, name);
 						}
 						getContentResolver().insert(FeedData.FeedColumns.CONTENT_URI, values);
@@ -107,6 +115,7 @@ public class FeedConfigActivity extends Activity {
 					nameEditText.setText(cursor.getString(0));
 					urlEditText.setText(cursor.getString(1));
 					refreshOnlyWifiCheckBox.setChecked(cursor.getInt(2) == 1);
+					entryLinkImgPattern.setText(cursor.getString(3));
 					cursor.close();
 				} else {
 					cursor.close();
@@ -114,12 +123,12 @@ public class FeedConfigActivity extends Activity {
 					finish();
 				}
 			}
-			((Button) findViewById(R.id.button_ok)).setOnClickListener(new OnClickListener() {
+			findViewById(R.id.button_ok).setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					String url = urlEditText.getText().toString();
 					
 					Cursor cursor = getContentResolver().query(FeedData.FeedColumns.CONTENT_URI, new String[] {FeedData.FeedColumns._ID}, new StringBuilder(FeedData.FeedColumns.URL).append(Strings.DB_ARG).toString(), new String[] {url}, null);
-					
+
 					if (cursor.moveToFirst() && !getIntent().getData().getLastPathSegment().equals(cursor.getString(0))) {
 						cursor.close();
 						Toast.makeText(FeedConfigActivity.this, R.string.error_feedurlexists, Toast.LENGTH_LONG).show();
@@ -133,10 +142,12 @@ public class FeedConfigActivity extends Activity {
 						values.put(FeedData.FeedColumns.URL, url);
 						
 						String name = nameEditText.getText().toString();
+						String imgPattern = entryLinkImgPattern.getText().toString();
 						
-						values.put(FeedData.FeedColumns.NAME, name.trim().length() > 0 ? name : null);
+						values.put(FeedData.FeedColumns.NAME, name.trim().isEmpty() ? null : name);
 						values.put(FeedData.FeedColumns.FETCHMODE, 0);
 						values.put(FeedData.FeedColumns.WIFIONLY, refreshOnlyWifiCheckBox.isChecked() ? 1 : 0);
+						values.put(FeedData.FeedColumns.ENTRY_LINK_IMG_PATTERN, imgPattern.trim().isEmpty() ? null : imgPattern);
 						values.put(FeedData.FeedColumns.ERROR, (String) null);
 						getContentResolver().update(getIntent().getData(), values, null, null);
 						
@@ -149,7 +160,7 @@ public class FeedConfigActivity extends Activity {
 			
 		}
 		
-		((Button) findViewById(R.id.button_cancel)).setOnClickListener(new OnClickListener() {
+		findViewById(R.id.button_cancel).setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				finish();
 			}

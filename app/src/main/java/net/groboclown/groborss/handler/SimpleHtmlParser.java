@@ -329,7 +329,7 @@ class SimpleHtmlParser {
                         // switch to looking for a tag.
                         state = ParseState.LESS_THAN;
                         if (pos > textStartPos + 1) {
-                            // There's plain mText to add.
+                            // There's plain text to add.
                             ret.add(current.buildPlainText(textStartPos, pos).close());
                             current = new HtmlBit(text);
                         }
@@ -344,7 +344,7 @@ class SimpleHtmlParser {
                         // another embedded mark.  Keep the stuff we're searching with as plain mText.
                         // And keep ourselves looking for a tag start.
                         if (pos > textStartPos + 1) {
-                            // There's plain mText to add.
+                            // There's plain text to add.
                             ret.add(current.buildPlainText(textStartPos, pos).close());
                             current = new HtmlBit(text);
                         }
@@ -394,7 +394,7 @@ class SimpleHtmlParser {
                     break;
                 }
                 case TAG_NAME: {
-                    // We're either in a start or close tag, reading in characters of the tag name.
+                    // We're either in a start or disconnect tag, reading in characters of the tag name.
                     if (isWhitespace(c)) {
                         // Found the end of the tag.  Start looking for attributes or tag end.
                         current.buildTag(bitStartPos, pos);
@@ -461,7 +461,7 @@ class SimpleHtmlParser {
                         // possible end tag start.
                         state = ParseState.TAG_SLASH;
                     } else if (c == '>') {
-                        // close of tag.
+                        // disconnect of tag.
                         ret.add(current.close());
                         current = new HtmlBit(text);
                         textStartPos = pos + 1;
@@ -550,7 +550,7 @@ class SimpleHtmlParser {
                     if (c == '/') {
                         // Unquoted slash.  This means a no-value attribute and a tail tag.
                         // Go directly to slash parsing.  This may not be 100% accurate, but it's
-                        // close enough.
+                        // disconnect enough.
                         state = ParseState.TAG_SLASH;
                     } else if (c == '>') {
                         // unquoted end-of-tag mark instead of value.  Interpreted the same as

@@ -49,7 +49,7 @@ public class FeedDataContentProvider extends ContentProvider {
 	
 	private static final String DATABASE_NAME = "groborss.db";
 	
-	private static final int DATABASE_VERSION = 16;
+	private static final int DATABASE_VERSION = 17;
 	
 	private static final int URI_FEEDS = 1;
 	
@@ -185,6 +185,10 @@ public class FeedDataContentProvider extends ContentProvider {
 	        }
 	        if (oldVersion < 16) {
 				executeCatchedSQL(database, new StringBuilder(ALTER_TABLE).append(TABLE_FEEDS).append(ADD).append(FeedData.FeedColumns.HOMEPAGE).append(' ').append(FeedData.TYPE_TEXT).toString());
+			}
+			if (oldVersion < 17) {
+				executeCatchedSQL(database, new StringBuilder(ALTER_TABLE).append(TABLE_FEEDS).append(ADD).append(FeedData.FeedColumns.ENTRY_LINK_IMG_PATTERN).append(' ').append(FeedData.TYPE_TEXT).toString());
+				executeCatchedSQL(database, new StringBuilder(ALTER_TABLE).append(TABLE_ENTRIES).append(ADD).append(FeedData.EntryColumns.LINK_IMG_URL).append(' ').append(FeedData.TYPE_TEXT).toString());
 			}
 		}
 		

@@ -185,6 +185,7 @@
     <string name="feed_title">Title</string>
     <string name="select_file">Select file (SD-root)</string>
     <string name="refreshonwifionly">Refresh only over Wifi</string>
+    <string name="entry_link_img_pattern">Link Image Pattern</string>
     <string name="changelog">Changelog</string>
 
     <string name="red">Red</string>

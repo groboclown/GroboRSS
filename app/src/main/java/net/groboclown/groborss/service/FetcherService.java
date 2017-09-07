@@ -31,15 +31,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.Exchanger;
 import java.util.zip.GZIPInputStream;
 
 import android.app.IntentService;
@@ -67,6 +65,7 @@ import net.groboclown.groborss.R;
 import net.groboclown.groborss.Strings;
 import net.groboclown.groborss.handler.RSSHandler;
 import net.groboclown.groborss.provider.FeedData;
+import net.groboclown.groborss.util.HttpDownload;
 
 public class FetcherService extends IntentService {
     private static final String TAG = "FetcherService";
@@ -104,9 +103,7 @@ public class FetcherService extends IntentService {
 	private NotificationManager notificationManager;
 	
 	private static SharedPreferences preferences = null;
-	
-	private static Proxy proxy;
-	
+
 	private static class FetchResult {
 		final int count;
 		final ArrayList<String> feedIds;
@@ -134,7 +131,7 @@ public class FetcherService extends IntentService {
 		if (intent.getBooleanExtra(Strings.SCHEDULED, false)) {
 			SharedPreferences.Editor editor = preferences.edit();
 			editor.putLong(Strings.PREFERENCE_LASTSCHEDULEDREFRESH, SystemClock.elapsedRealtime());
-			editor.commit();
+			editor.apply();
 		}
 		
 		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -142,16 +139,6 @@ public class FetcherService extends IntentService {
 		final NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 		
 		if (networkInfo != null && networkInfo.getState() == NetworkInfo.State.CONNECTED) {
-			if (preferences.getBoolean(Strings.SETTINGS_PROXYENABLED, false) && (networkInfo.getType() == ConnectivityManager.TYPE_WIFI || !preferences.getBoolean(Strings.SETTINGS_PROXYWIFIONLY, false))) {
-				try {
-					proxy = new Proxy(ZERO.equals(preferences.getString(Strings.SETTINGS_PROXYTYPE, ZERO)) ? Proxy.Type.HTTP : Proxy.Type.SOCKS, new InetSocketAddress(preferences.getString(Strings.SETTINGS_PROXYHOST, Strings.EMPTY), Integer.parseInt(preferences.getString(Strings.SETTINGS_PROXYPORT, Strings.DEFAULTPROXYPORT))));
-				} catch (Exception e) {
-					proxy = null;
-				}
-			} else {
-				proxy = null;
-			}
-
             FetchResult updates = FetcherService.refreshFeedsStatic(FetcherService.this, intent.getStringExtra(Strings.FEEDID), networkInfo, intent.getBooleanExtra(Strings.SETTINGS_OVERRIDEWIFIONLY, false) || preferences.getBoolean(Strings.SETTINGS_OVERRIDEWIFIONLY, false));
 
             if (updates.count > 0) {
@@ -273,41 +260,45 @@ public class FetcherService extends IntentService {
 		
 		int iconPosition = cursor.getColumnIndex(FeedData.FeedColumns.ICON);
 
-		int homepagePosition = cursor.getColumnIndex(FeedData.FeedColumns.HOMEPAGE);
-		
-		boolean imposeUserAgent = !preferences.getBoolean(Strings.SETTINGS_STANDARDUSERAGENT, false);
+		// int homepagePosition = cursor.getColumnIndex(FeedData.FeedColumns.HOMEPAGE);
 
+		int entryLinkImgPattern = cursor.getColumnIndex(FeedData.FeedColumns.ENTRY_LINK_IMG_PATTERN);
+		
 		int skipAlertPosition = cursor.getColumnIndex(FeedData.FeedColumns.SKIP_ALERT);
-		
-		boolean followHttpHttpsRedirects = preferences.getBoolean(Strings.SETTINGS_HTTPHTTPSREDIRECTS, false);
-		
+
 		int result = 0;
 		ArrayList<String> ids = new ArrayList<>();
 		boolean updateWidget = false;
 		
 		RSSHandler handler = new RSSHandler(context);
-		
+        HttpDownload.Factory connectionFactory = HttpDownload.setup(context);
+
 		handler.setEfficientFeedParsing(preferences.getBoolean(Strings.SETTINGS_EFFICIENTFEEDPARSING, true));
 		handler.setFetchImages(preferences.getBoolean(Strings.SETTINGS_FETCHPICTURES, false));
-		
-		while(cursor.moveToNext()) {
+        handler.setHttpDownloadFactory(connectionFactory);
+
+		while (cursor.moveToNext()) {
 			String id = cursor.getString(idPosition);
-			
-			HttpURLConnection connection = null;
-			
+
+			// TODO This is a big hack
+			handler.setEntryLinkImagePattern(cursor.getString(entryLinkImgPattern));
+
+			HttpDownload connection = null;
+
 			try {
 				String feedUrl = cursor.getString(urlPosition);
-				
-				connection = setupConnection(feedUrl, imposeUserAgent, followHttpHttpsRedirects);
-				
-				String contentType = connection.getContentType();
+
+				connection = connectionFactory.connect(feedUrl);
+                if (connection == null) {
+                    continue;
+                }
 
 				int fetchMode = cursor.getInt(fetchmodePosition);
 				
 				handler.init(new Date(cursor.getLong(lastUpdatePosition)), id, cursor.getString(titlePosition), feedUrl);
 				if (fetchMode == 0) {
-					if (contentType != null && contentType.startsWith(CONTENT_TYPE_TEXT_HTML)) {
-						BufferedReader reader = new BufferedReader(new InputStreamReader(getConnectionInputStream(connection)));
+					if (connection.isHtmlDocument()) {
+						BufferedReader reader = connection.getAsReader();
 						
 						String line;
 						
@@ -344,63 +335,23 @@ public class FetcherService extends IntentService {
 										values.put(FeedData.FeedColumns.URL, url);
 										context.getContentResolver().update(FeedData.FeedColumns.CONTENT_URI(id), values, null, null);
 										connection.disconnect();
-										connection = setupConnection(url, imposeUserAgent, followHttpHttpsRedirects);
-										contentType = connection.getContentType();
+										connection = connectionFactory.connect(url);
 										break;
 									}
 								}
 							}
 						}
 						if (posStart == -1) { // this indicates a badly configured feed
-							connection.disconnect();
-							connection = setupConnection(feedUrl, imposeUserAgent, followHttpHttpsRedirects);
-							contentType = connection.getContentType();
+							connection = connection.reset();
 						}
-						
 					}
-					
-					if (contentType != null) {
-						int index = contentType.indexOf(CHARSET);
-						
-						if (index > -1) {
-							int index2 = contentType.indexOf(';', index);
-							
-							try {
-								Xml.findEncodingByName(index2 > -1 ?contentType.substring(index+8, index2) : contentType.substring(index+8));
-								fetchMode = FETCHMODE_DIRECT;
-							} catch (UnsupportedEncodingException usee) {
-								fetchMode = FETCHMODE_REENCODE;
-							}
-						} else {
-							fetchMode = FETCHMODE_REENCODE;
-						}
-						
-					} else {
-						BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(getConnectionInputStream(connection)));
-						
-						char[] chars = new char[20];
-						
-						int length = bufferedReader.read(chars);
 
-						String xmlDescription = new String(chars, 0, length);
-						
-						connection.disconnect();
-						connection = setupConnection(connection.getURL(), imposeUserAgent, followHttpHttpsRedirects);
-						
-						int start = xmlDescription != null ?  xmlDescription.indexOf(ENCODING) : -1;
-						
-						if (start > -1) {
-							try {
-								Xml.findEncodingByName(xmlDescription.substring(start+10, xmlDescription.indexOf('"', start+11)));
-								fetchMode = FETCHMODE_DIRECT;
-							} catch (UnsupportedEncodingException usee) {
-								fetchMode = FETCHMODE_REENCODE;
-							}
-						} else {
-							fetchMode = FETCHMODE_DIRECT; // absolutely no encoding information found
-						}
+					if (connection.isXmlEncodingSupported()) {
+						fetchMode = FETCHMODE_DIRECT;
+					} else {
+						fetchMode = FETCHMODE_REENCODE;
 					}
-					
+
 					ContentValues values = new ContentValues();
 					
 					values.put(FeedData.FeedColumns.FETCHMODE, fetchMode); 
@@ -411,10 +362,10 @@ public class FetcherService extends IntentService {
 				byte[] iconBytes = cursor.getBlob(iconPosition);
 				
 				if (iconBytes == null) {
-					HttpURLConnection iconURLConnection = setupConnection(new URL(connection.getURL().getProtocol() + Strings.PROTOCOL_SEPARATOR + connection.getURL().getHost() + Strings.FILE_FAVICON), imposeUserAgent, followHttpHttpsRedirects);
+					HttpDownload iconURLConnection = connection.getFaviconConnection();
 					
 					try {
-						iconBytes = getBytes(getConnectionInputStream(iconURLConnection));
+						iconBytes = iconURLConnection.getAsBytes();
 						ContentValues values = new ContentValues();
 						
 						values.put(FeedData.FeedColumns.ICON, iconBytes); 
@@ -432,68 +383,38 @@ public class FetcherService extends IntentService {
 				switch (fetchMode) {
 					default:
 					case FETCHMODE_DIRECT: {
-						if (contentType != null) {
-							int index = contentType.indexOf(CHARSET);
-							
-							int index2 = contentType.indexOf(';', index);
-							
-							InputStream inputStream = getConnectionInputStream(connection);
-							
-							handler.setInputStream(inputStream);
-							Xml.parse(inputStream, Xml.findEncodingByName(index2 > -1 ?contentType.substring(index+8, index2) : contentType.substring(index+8)), handler);
+                        String encoding = connection.getEncodingCharset(true);
+                        if (encoding != null) {
+                            InputStream inputStream = connection.getAsInputStream();
+                            handler.setInputStream(inputStream);
+                            try {
+                                Xml.parse(inputStream, Xml.findEncodingByName(encoding), handler);
+                            } catch (Exception e) {
+                                Log.i(TAG, "Failed to read XML from " + feedUrl, e);
+                                throw e;
+                            }
 						} else {
-							InputStreamReader reader = new InputStreamReader(getConnectionInputStream(connection));
+                            BufferedReader reader = connection.getAsReader();
 							
 							handler.setReader(reader);
-							Xml.parse(reader, handler);
+                            try {
+                                Xml.parse(reader, handler);
+                            } catch (Exception e) {
+                                Log.i(TAG, "Failed to read XML from " + feedUrl, e);
+                                throw e;
+                            }
 						}
 						break;
 					}
 					case FETCHMODE_REENCODE: {
-						ByteArrayOutputStream ouputStream = new ByteArrayOutputStream();
-						
-						InputStream inputStream = getConnectionInputStream(connection);
-						
-						byte[] byteBuffer = new byte[4096]; 
-						
-						int n;
-
-						while ( (n = inputStream.read(byteBuffer)) > 0 ) {
-							ouputStream.write(byteBuffer, 0, n);
-						}
-						
-						String xmlText = ouputStream.toString();
-						
-						int start = xmlText != null ?  xmlText.indexOf(ENCODING) : -1;
-						
-						if (start > -1) {
-							Xml.parse(new StringReader(new String(ouputStream.toByteArray(), xmlText.substring(start+10, xmlText.indexOf('"', start+11)))), handler);
-						} else {
-							// use content type
-							if (contentType != null) {
-								
-								int index = contentType.indexOf(CHARSET);
-								
-								if (index > -1) {
-									int index2 = contentType.indexOf(';', index);
-									
-									try {
-										StringReader reader = new StringReader(new String(ouputStream.toByteArray(), index2 > -1 ?contentType.substring(index+8, index2) : contentType.substring(index+8)));
-										
-										handler.setReader(reader);
-										Xml.parse(reader, handler);
-									} catch (Exception e) {
-                                        Log.i(TAG, "Failed to read XML from " + feedUrl, e);
-									}
-								} else {
-									StringReader reader = new StringReader(new String(ouputStream.toByteArray()));
-									
-									handler.setReader(reader);
-									Xml.parse(reader, handler);
-									
-								}
-							}
-						}
+                        StringReader reader = new StringReader(connection.getAsString(false));
+                        handler.setReader(reader);
+                        try {
+                            Xml.parse(reader, handler);
+                        } catch (Exception e) {
+                            Log.i(TAG, "Failed to read XML from " + feedUrl, e);
+                            throw e;
+                        }
 						break;
 					}
 				}
@@ -517,14 +438,14 @@ public class FetcherService extends IntentService {
 					connection.disconnect();
 				}
 			}
-			if( cursor.getInt(skipAlertPosition) != 1 ) {
+			if (cursor.getInt(skipAlertPosition) != 1) {
 				result += handler.getNewCount();
-				if( handler.getNewCount() > 0 ) {
+				if (handler.getNewCount() > 0) {
 					ids.add(handler.getId());
 				}
 			}
 			
-			if(!updateWidget && handler.getNewCount() > 0) {
+			if (!updateWidget && handler.getNewCount() > 0) {
 				updateWidget = true;
 			}
 		}
@@ -534,83 +455,5 @@ public class FetcherService extends IntentService {
 			context.sendBroadcast(new Intent(Strings.ACTION_UPDATEWIDGET));
 		}
 		return new FetchResult(result, ids);
-	}
-	
-	private static HttpURLConnection setupConnection(String url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-		return setupConnection(new URL(url), imposeUseragent, followHttpHttpsRedirects);
-	}
-	
-	private static HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-		return setupConnection(url, imposeUseragent, followHttpHttpsRedirects, 0);
-	}
-	
-	private static HttpURLConnection setupConnection(URL url, boolean imposeUseragent, boolean followHttpHttpsRedirects, int cycle) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-		HttpURLConnection connection = proxy == null ? (HttpURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection(proxy);
-		
-		connection.setDoInput(true);
-		connection.setDoOutput(false);
-		if (imposeUseragent) {
-			connection.setRequestProperty(KEY_USERAGENT, VALUE_USERAGENT); // some feeds need this to work properly
-		}
-		connection.setConnectTimeout(30000);
-		connection.setReadTimeout(30000);
-		connection.setUseCaches(false);
-		
-		if (url.getUserInfo() != null) {
-			connection.setRequestProperty("Authorization", "Basic "+BASE64.encode(url.getUserInfo().getBytes()));
-		}
-		connection.setRequestProperty("connection", "close"); // Workaround for android issue 7786
-		connection.setRequestProperty("accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-		connection.connect();
-		
-		String location = connection.getHeaderField("Location");
-		
-		if (location != null && (url.getProtocol().equals(Strings._HTTP) && location.startsWith(Strings.HTTPS) || url.getProtocol().equals(Strings._HTTPS) && location.startsWith(Strings.HTTP))) { 
-			// if location != null, the system-automatic redirect has failed which indicates a protocol change
-			if (followHttpHttpsRedirects) {
-				connection.disconnect();
-					
-				if (cycle < 5) {
-					return setupConnection(new URL(location), imposeUseragent, followHttpHttpsRedirects, cycle+1);
-				} else {
-					throw new IOException("Too many redirects.");
-				}
-			} else {
-				throw new IOException("https<->http redirect - enable in settings");
-			}
-		}
-		return connection;
-	}
-
-	public static byte[] getBytes(InputStream inputStream) throws IOException {
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		
-		byte[] buffer = new byte[4096];
-		  
-		int n;
-
-		while ((n = inputStream.read(buffer)) > 0) {
-			output.write(buffer, 0, n);
-		}
-
-		byte[] result  = output.toByteArray();
-		
-		output.close();
-		inputStream.close();
-		return result;
-	}
-	
-	/**
-	 * This is a small wrapper for getting the properly encoded inputstream if is is gzip compressed
-	 * and not properly recognized.
-	 */
-	private static InputStream getConnectionInputStream(HttpURLConnection connection) throws IOException {
-		InputStream inputStream = connection.getInputStream();
-		
-		if (GZIP.equals(connection.getContentEncoding()) && !(inputStream instanceof GZIPInputStream)) {
-			return new GZIPInputStream(inputStream);
-		} else {
-			return inputStream;
-		}
 	}
 }

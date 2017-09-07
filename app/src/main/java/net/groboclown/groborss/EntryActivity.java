@@ -422,7 +422,7 @@ public class EntryActivity extends Activity {
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
                 } else {
 					// TODO figure out what to correctly show here.
-					// If you view this entry, it currently causes the page view to close.
+					// If you view this entry, it currently causes the page view to disconnect.
                     Log.d(TAG, "Nothing to show for " + uri);
 				}
 			} else {

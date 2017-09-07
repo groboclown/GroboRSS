@@ -79,10 +79,12 @@ public class FeedData {
 		public static final String WIFIONLY = "wifionly";
 
 		public static final String HOMEPAGE = "homepage";
+
+		public static final String ENTRY_LINK_IMG_PATTERN = "imgpattern";
 		
-		public static final String[] COLUMNS = new String[] {_ID, URL, NAME, LASTUPDATE, ICON, ERROR, PRIORITY, FETCHMODE, REALLASTUPDATE, ALERT_RINGTONE, OTHER_ALERT_RINGTONE, SKIP_ALERT, WIFIONLY, HOMEPAGE};
+		public static final String[] COLUMNS = new String[] {_ID, URL, NAME, LASTUPDATE, ICON, ERROR, PRIORITY, FETCHMODE, REALLASTUPDATE, ALERT_RINGTONE, OTHER_ALERT_RINGTONE, SKIP_ALERT, WIFIONLY, HOMEPAGE, ENTRY_LINK_IMG_PATTERN};
 		
-		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "TEXT UNIQUE", TYPE_TEXT, TYPE_DATETIME, "BLOB", TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_DATETIME, TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_BOOLEAN, TYPE_TEXT};
+		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "TEXT UNIQUE", TYPE_TEXT, TYPE_DATETIME, "BLOB", TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_DATETIME, TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT};
 		
 		public static final Uri CONTENT_URI(String feedId) {
 			return Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/feeds/").append(feedId).toString());
@@ -113,10 +115,12 @@ public class FeedData {
 		public static final String GUID = "guid";
 		
 		public static final String AUTHOR = "author";
+
+		public static final String LINK_IMG_URL = "linkimgurl";
 		
-		public static final String[] COLUMNS = new String[] {_ID, FEED_ID, TITLE, ABSTRACT, DATE, READDATE, LINK, FAVORITE, ENCLOSURE, GUID, AUTHOR};
+		public static final String[] COLUMNS = new String[] {_ID, FEED_ID, TITLE, ABSTRACT, DATE, READDATE, LINK, FAVORITE, ENCLOSURE, GUID, AUTHOR, LINK_IMG_URL};
 		
-		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "INTEGER(7)", TYPE_TEXT, TYPE_TEXT, TYPE_DATETIME, TYPE_DATETIME, TYPE_TEXT, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT, TYPE_TEXT};
+		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "INTEGER(7)", TYPE_TEXT, TYPE_TEXT, TYPE_DATETIME, TYPE_DATETIME, TYPE_TEXT, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT, TYPE_TEXT, TYPE_TEXT};
 
 		public static Uri CONTENT_URI = Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/entries").toString());
 		

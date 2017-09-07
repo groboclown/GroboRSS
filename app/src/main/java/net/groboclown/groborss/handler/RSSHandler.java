@@ -25,11 +25,30 @@
 
 package net.groboclown.groborss.handler;
 
+import android.content.ContentValues;
+import android.content.Context;
+import android.net.Uri;
+import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
+import android.text.Html;
+import android.util.Log;
+
+import net.groboclown.groborss.Strings;
+import net.groboclown.groborss.provider.FeedData;
+import net.groboclown.groborss.provider.FeedDataContentProvider;
+import net.groboclown.groborss.util.HttpDownload;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -38,22 +57,7 @@ import java.util.Locale;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
-import android.content.ContentValues;
-import android.content.Context;
-import android.net.Uri;
-import android.preference.PreferenceManager;
-import android.text.Html;
-import android.util.Log;
-
-import net.groboclown.groborss.Strings;
-import net.groboclown.groborss.provider.FeedData;
-import net.groboclown.groborss.provider.FeedDataContentProvider;
-import net.groboclown.groborss.service.FetcherService;
+import java.util.regex.PatternSyntaxException;
 
 public class RSSHandler extends DefaultHandler {
 	private static final String LOG_TAG = "RSSHandler";
@@ -119,7 +123,7 @@ public class RSSHandler extends DefaultHandler {
 	private static final int TIMEZONES_COUNT = 3;
 
 	
-	private static long KEEP_TIME = 345600000l; // 4 days
+	private static long KEEP_TIME = 345600000L; // 4 days
 	
 	
 	private static final DateFormat[] PUBDATE_DATEFORMATS = {
@@ -151,7 +155,7 @@ public class RSSHandler extends DefaultHandler {
 	
 	private Date lastUpdateDate;
 	
-	String id;
+	private String id;
 
 	private boolean titleTagEntered;
 	
@@ -218,9 +222,11 @@ public class RSSHandler extends DefaultHandler {
 	private StringBuilder author;
 	
 	private boolean nameTagEntered;
+	private Pattern entryLinkImagePattern;
+    private HttpDownload.Factory httpDownloadFactory;
 
-	public RSSHandler(Context context) {
-		KEEP_TIME = Long.parseLong(PreferenceManager.getDefaultSharedPreferences(context).getString(Strings.SETTINGS_KEEPTIME, "4"))*86400000l;
+    public RSSHandler(Context context) {
+		KEEP_TIME = Long.parseLong(PreferenceManager.getDefaultSharedPreferences(context).getString(Strings.SETTINGS_KEEPTIME, "4"))*86400000L;
 		this.context = context;
 		this.efficientFeedParsing = true;
 	}
@@ -233,7 +239,8 @@ public class RSSHandler extends DefaultHandler {
 		this.id = id;
 		feedEntiresUri = FeedData.EntryColumns.CONTENT_URI(id);
 		
-		final String query = new StringBuilder(FeedData.EntryColumns.DATE).append('<').append(keepDateBorderTime).append(DB_FAVORITE).toString();
+		final String query = FeedData.EntryColumns.DATE
+                + '<' + keepDateBorderTime + DB_FAVORITE;
 		
 		FeedData.deletePicturesOfFeed(context, feedEntiresUri, query);
 		
@@ -241,7 +248,7 @@ public class RSSHandler extends DefaultHandler {
 		newCount = 0;
 		feedRefreshed = false;
 		feedTitle = title;
-		
+
 		int index = url.indexOf('/', 8); // this also covers https://
 		
 		if (index > -1) {
@@ -458,29 +465,7 @@ public class RSSHandler extends DefaultHandler {
 				if (author != null) {
 					values.put(FeedData.EntryColumns.AUTHOR, author.toString());
 				}
-				
-				Vector<String> images = null;
-				
-				if (description != null) {
-					String descriptionString = description.toString().trim().replaceAll(Strings.HTML_SPAN_REGEX, Strings.EMPTY);
-					
-					if (descriptionString.length() > 0) {
-						if (fetchImages) {
-							images = new Vector<>(4);
-							 
-							Matcher matcher = imgPattern.matcher(description);
-							
-							while (matcher.find()) {
-								String match = matcher.group(1).replace(Strings.SPACE, Strings.URL_SPACE);
-								
-								images.add(match);
-								descriptionString = descriptionString.replace(match, new StringBuilder(Strings.FILEURL).append(FeedDataContentProvider.IMAGEFOLDER).append(Strings.IMAGEID_REPLACEMENT).append(match.substring(match.lastIndexOf('/')+1)).toString());
-							}
-						}
-						values.put(FeedData.EntryColumns.ABSTRACT, descriptionString); 
-					}
-				}
-				
+
 				String enclosureString = null;
 				
 				StringBuilder existanceStringBuilder = new StringBuilder(FeedData.EntryColumns.LINK).append(Strings.DB_ARG);
@@ -507,13 +492,71 @@ public class RSSHandler extends DefaultHandler {
 						entryLinkString = feedBaseUrl + (entryLinkString.startsWith(Strings.SLASH) ? entryLinkString : Strings.SLASH + entryLinkString);
 					}
 				}
-				
-				String[] existanceValues = enclosureString != null ? (guidString != null ? new String[] {entryLinkString, enclosureString, guidString}: new String[] {entryLinkString, enclosureString}) : (guidString != null ? new String[] {entryLinkString, guidString} : new String[] {entryLinkString});
+
+                Vector<String> images = null;
+
+                if (description != null) {
+                    String descriptionString = description.toString().trim().replaceAll(Strings.HTML_SPAN_REGEX, Strings.EMPTY);
+
+                    if (descriptionString.length() > 0) {
+                        if (fetchImages) {
+                            images = new Vector<>(4);
+
+                            Matcher matcher = imgPattern.matcher(description);
+
+                            while (matcher.find()) {
+                                String match = matcher.group(1).replace(Strings.SPACE, Strings.URL_SPACE);
+
+                                images.add(match);
+                                descriptionString = descriptionString.replace(
+                                        match,
+                                        Strings.FILEURL
+                                                + FeedDataContentProvider.IMAGEFOLDER
+                                                + Strings.IMAGEID_REPLACEMENT
+                                                + match.substring(match.lastIndexOf('/') + 1));
+                            }
+                        }
+
+                        String imageUrl = getLinkedImageUrl(entryLinkString);
+                        if (imageUrl != null) {
+                            // TODO move HTML markup to Strings.
+                            descriptionString += "<p><img src='";
+                            if (fetchImages) {
+                                images.add(imageUrl);
+                                descriptionString += Strings.FILEURL
+                                        + FeedDataContentProvider.IMAGEFOLDER
+                                        + Strings.IMAGEID_REPLACEMENT
+                                        + imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+                            } else {
+                                descriptionString += imageUrl;
+                            }
+                            descriptionString += "'><br><font color='gray'><smaller><i>image pulled from RSS entry link</i></smaller></font></p>";
+                            values.put(FeedData.EntryColumns.ABSTRACT, descriptionString);
+                        } else if (entryLinkImagePattern != null && ! entryLinkImagePattern.pattern().isEmpty()) {
+                            // Want an image for this feed, but didn't find one.
+                            // Note that official escaping HTML is not supported earlier than v16.
+                            // String patternHtml = Html.escapeHtml(entryLinkImagePattern.pattern());
+                            String patternHtml = entryLinkImagePattern.pattern()
+                                    .replace("&", "&amp;")
+                                    .replace("<", "&lt;")
+                                    .replace(">", "&gt;")
+                                    // everything else should be mostly fine
+                                    ;
+                            descriptionString += "<p><font color='gray'><smaller><i>pattern <tt>" + patternHtml + "</tt> not found in link</i></smaller></font></p>";
+                            values.put(FeedData.EntryColumns.ABSTRACT, descriptionString);
+                        }
+
+
+                        values.put(FeedData.EntryColumns.ABSTRACT, descriptionString);
+                    }
+                }
+
+                String[] existenceValues = enclosureString != null ? (guidString != null ? new String[] {entryLinkString, enclosureString, guidString}: new String[] {entryLinkString, enclosureString}) : (guidString != null ? new String[] {entryLinkString, guidString} : new String[] {entryLinkString});
 				
 				boolean skip = false;
 				
 				if (!efficientFeedParsing) {
-					if (context.getContentResolver().update(feedEntiresUri, values, existanceStringBuilder.toString()+" AND "+FeedData.EntryColumns.DATE+"<"+entryDate.getTime(), existanceValues) == 1) {
+					if (context.getContentResolver().update(feedEntiresUri, values, existanceStringBuilder.toString()+" AND "+FeedData.EntryColumns.DATE+"<"+entryDate.getTime(), existenceValues) == 1) {
 						newCount++;
 						skip = true;
 					} else {
@@ -522,7 +565,7 @@ public class RSSHandler extends DefaultHandler {
 					}
 				}
 				
-				if (!skip && ((entryLinkString.length() == 0 && guidString == null) || context.getContentResolver().update(feedEntiresUri, values, existanceStringBuilder.toString(), existanceValues) == 0)) {
+				if (!skip && ((entryLinkString.isEmpty() && guidString == null) || context.getContentResolver().update(feedEntiresUri, values, existanceStringBuilder.toString(), existenceValues) == 0)) {
 					values.put(FeedData.EntryColumns.LINK, entryLinkString);
 					if (entryDate == null) {
 						values.put(FeedData.EntryColumns.DATE, now--);
@@ -531,7 +574,7 @@ public class RSSHandler extends DefaultHandler {
 					String entryId = context.getContentResolver().insert(feedEntiresUri, values).getLastPathSegment();
 					
 					if (fetchImages) {
-						FeedDataContentProvider.IMAGEFOLDER_FILE.mkdir(); // create images dir
+                        FeedDataContentProvider.IMAGEFOLDER_FILE.mkdir(); // create images dir
 						for (int n = 0, i = images != null ? images.size() : 0; n < i; n++) {
 							String filename = null;
 							try {
@@ -539,13 +582,22 @@ public class RSSHandler extends DefaultHandler {
 								filename = FeedDataContentProvider.IMAGEFOLDER + entryId
 										+ Strings.IMAGEFILE_IDSEPARATOR
 										+ match.substring(match.lastIndexOf('/') + 1);
-								
-								byte[] data = FetcherService.getBytes(new URL(images.get(n)).openStream());
-								
-								FileOutputStream fos = new FileOutputStream(filename);
-								
-								fos.write(data);
-								fos.close();
+
+                                HttpDownload connection = httpDownloadFactory.connect(images.get(n));
+                                if (connection != null) {
+                                    try {
+                                        byte[] data = connection.getAsBytes();
+
+                                        FileOutputStream fos = new FileOutputStream(filename);
+                                        try {
+                                            fos.write(data);
+                                        } finally {
+                                            fos.close();
+                                        }
+                                    } finally {
+                                        connection.disconnect();
+                                    }
+                                }
 							} catch (Exception e) {
 								Log.w(LOG_TAG, "Problem saving file " + filename, e);
 							}
@@ -574,8 +626,73 @@ public class RSSHandler extends DefaultHandler {
 			authorTagEntered = false;
 		}
 	}
-	
-	public int getNewCount() {
+
+    private String getLinkedImageUrl(String entryLinkString) {
+        if (entryLinkImagePattern != null && ! entryLinkString.isEmpty() &&
+                !entryLinkString.isEmpty() && httpDownloadFactory != null) {
+            // Fetch the URL at the link and search for the pattern.
+            String imageUrl = null;
+            URL referred = null;
+            try {
+                HttpDownload connection = httpDownloadFactory.connect(entryLinkString);
+                if (connection != null) {
+                    referred = connection.getURL();
+                    for (SimpleHtmlParser.HtmlBit bit : SimpleHtmlParser.parse(connection.getAsString(false))) {
+                        if (bit.isStartTag() && "img".equalsIgnoreCase(bit.getTag())) {
+                            String src = bit.getAttributeValue("src");
+                            if (src != null && entryLinkImagePattern.matcher(src).matches()) {
+                                imageUrl = src;
+                                break;
+                            }
+                        }
+                    }
+
+                }
+            } catch (IOException | KeyManagementException | NoSuchAlgorithmException e) {
+                Log.w(LOG_TAG, "Problem reading link " + entryLinkString, e);
+            }
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                if (imageUrl.startsWith("/")) {
+                    // relative URL to the hostname
+                    imageUrl = referred.getProtocol()
+                            + Strings.PROTOCOL_SEPARATOR
+                            + referred.getHost()
+                            + imageUrl;
+                } else if (!imageUrl.contains(Strings.PROTOCOL_SEPARATOR)) {
+                    String srcPath = referred.getPath();
+                    if (srcPath.endsWith("/")) {
+                        imageUrl = referred.getProtocol()
+                                + Strings.PROTOCOL_SEPARATOR
+                                + referred.getHost()
+                                + srcPath
+                                + imageUrl;
+                    } else {
+                        int p = srcPath.lastIndexOf('/');
+                        if (p >= 0) {
+                            imageUrl = referred.getProtocol()
+                                    + Strings.PROTOCOL_SEPARATOR
+                                    + referred.getHost()
+                                    // include the first and last '/'
+                                    + srcPath.substring(0, p + 1)
+                                    + imageUrl;
+                        } else {
+                            // no path for the image.
+                            imageUrl = referred.getProtocol()
+                                    + Strings.PROTOCOL_SEPARATOR
+                                    + referred.getHost()
+                                    + '/'
+                                    + imageUrl;
+                        }
+                    }
+                }
+
+                return imageUrl.replace(Strings.SPACE, Strings.URL_SPACE);
+            }
+        }
+        return null;
+    }
+
+    public int getNewCount() {
 		return newCount;
 	}
 	
@@ -609,13 +726,13 @@ public class RSSHandler extends DefaultHandler {
 				try {
 					inputStream.close(); // stops all parsing
 				} catch (IOException e) {
-					
+                    Log.d(LOG_TAG, "stream close on cancel error", e);
 				}
 			} else if (reader != null) {
 				try {
 					reader.close(); // stops all parsing
 				} catch (IOException e) {
-					
+					Log.d(LOG_TAG, "reader close on cancel error", e);
 				}
 			}
 		}
@@ -630,7 +747,10 @@ public class RSSHandler extends DefaultHandler {
 		for (int n = 0; n < DATEFORMAT_COUNT; n++) {
 			try {
 				return UPDATE_DATEFORMATS[n].parse(string);
-			} catch (ParseException e) { } // just do nothing
+			} catch (ParseException e) {
+                // just do nothing
+                Log.d(LOG_TAG, "date parse problem for " + string, e);
+            }
 		}
 		return null;
 	}
@@ -642,7 +762,10 @@ public class RSSHandler extends DefaultHandler {
 		for (int n = 0; n < PUBDATEFORMAT_COUNT; n++) {
 			try {
 				return PUBDATE_DATEFORMATS[n].parse(string);
-			} catch (ParseException e) { } // just do nothing
+			} catch (ParseException e) {
+                // just do nothing
+                Log.d(LOG_TAG, "date parse problem for " + string, e);
+            }
 		}
 		return null;
 	}
@@ -650,7 +773,7 @@ public class RSSHandler extends DefaultHandler {
 	private static String unescapeTitle(String title) {
 		String result = title.replace(Strings.AMP_SG, Strings.AMP).replaceAll(Strings.HTML_TAG_REGEX, Strings.EMPTY).replace(Strings.HTML_LT, Strings.LT).replace(Strings.HTML_GT, Strings.GT).replace(Strings.HTML_QUOT, Strings.QUOT).replace(Strings.HTML_APOSTROPHE, Strings.APOSTROPHE);
 		
-		if (result.indexOf(ANDRHOMBUS) > -1) {
+		if (result.contains(ANDRHOMBUS)) {
 			return Html.fromHtml(result, null, null).toString();
 		} else {
 			return result;
@@ -660,5 +783,22 @@ public class RSSHandler extends DefaultHandler {
 	public void setEfficientFeedParsing(boolean efficientFeedParsing) {
 		this.efficientFeedParsing = efficientFeedParsing;
 	}
-	
+
+	// TODO BIG HACK
+	public void setEntryLinkImagePattern(@Nullable String entryLinkImagePattern) {
+        if (entryLinkImagePattern == null) {
+            this.entryLinkImagePattern = null;
+        } else {
+            try {
+                this.entryLinkImagePattern = Pattern.compile(entryLinkImagePattern);
+            } catch (PatternSyntaxException e) {
+                Log.w(LOG_TAG, "Could not parse regular expression " + entryLinkImagePattern, e);
+            }
+        }
+	}
+
+    public void setHttpDownloadFactory(HttpDownload.Factory httpDownloadFactory) {
+        this.httpDownloadFactory = httpDownloadFactory;
+    }
+
 }

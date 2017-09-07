@@ -37,5 +37,12 @@
             android:id="@+id/wifionlycheckbox"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"/>
+        <EditText
+            android:text="@string/entry_link_img_pattern"
+            android:hint="@string/optional"
+            android:id="@+id/feed_entry_link_img_pattern"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            />
     </LinearLayout>
 </ScrollView>
