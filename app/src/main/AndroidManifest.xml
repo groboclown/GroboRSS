@@ -5,7 +5,7 @@
     android:versionCode="87" android:versionName="1.7"
     android:installLocation="auto">
 
-    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="14"/>
+    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="26"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -33,7 +33,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Light" >
+        android:theme="@style/AppTheme" >
         <service android:name="net.groboclown.groborss.service.RefreshService"/>
         <service android:name="net.groboclown.groborss.service.FetcherService"/>
         <provider

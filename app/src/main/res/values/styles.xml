@@ -1,7 +1,8 @@
 <resources>
-    <style name="Theme.Light" parent="android:Theme.Light"/>
-    <style name="Theme.Dark" parent="android:Theme.Holo"/>
-    <style name="ButtonBar" parent="android:ButtonBar"/>
+    <style name="AppTheme" parent="@style/Theme.AppCompat"/>
+    <style name="Theme.Light" parent="@style/Theme.AppCompat.Light"/>
+    <style name="Theme.Dark" parent="@style/Theme.AppCompat"/>
+    <style name="ButtonBar" parent="@android:style/ButtonBar"/>
     <style name="Theme.Dialog" parent="@android:style/Theme.Dialog"/>
     <style name="Widget.Button.Dialog" parent="@android:style/Widget.Button"/>
 </resources>
