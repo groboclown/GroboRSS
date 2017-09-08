@@ -1,8 +1,14 @@
 <resources>
-    <style name="AppTheme" parent="@style/Theme.AppCompat"/>
+    <!--
+    <style name="Theme.Light" parent="@android:style/Theme.DeviceDefault.Light"/>
+    <style name="Theme.Dark" parent="@android:style/Theme.DeviceDefault"/>
+    <style name="ButtonBar" parent="@android:style/DeviceDefault.ButtonBar.AlertDialog"/>
+    <style name="Theme.Dialog" parent="@android:style/Theme.DeviceDefault.Dialog"/>
+    <style name="Widget.Button.Dialog" parent="@android:style/Widget.DeviceDefault.Button.Borderless"/>
+    -->
     <style name="Theme.Light" parent="@style/Theme.AppCompat.Light"/>
     <style name="Theme.Dark" parent="@style/Theme.AppCompat"/>
-    <style name="ButtonBar" parent="@android:style/ButtonBar"/>
-    <style name="Theme.Dialog" parent="@android:style/Theme.Dialog"/>
-    <style name="Widget.Button.Dialog" parent="@android:style/Widget.Button"/>
+    <style name="ButtonBar" parent="@style/AlertDialog.AppCompat"/>
+    <style name="Theme.Dialog" parent="@style/Theme.AppCompat.Dialog"/>
+    <style name="Widget.Button.Dialog" parent="@style/Widget.AppCompat.Button.Borderless"/>
 </resources>

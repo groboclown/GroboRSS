@@ -11,8 +11,10 @@
         android:layout_gravity="fill"
         android:layout_weight="1"
         android:paddingLeft="0dip"
+        android:paddingStart="0dip"
         android:paddingTop="0dip"
         android:paddingRight="2dip"
+        android:paddingEnd="2dip"
         android:paddingBottom="0dip">
         <TextView
             android:id="@+id/license_text"
@@ -24,7 +26,7 @@
             android:paddingRight="5dip"
             android:paddingBottom="0dip"
             android:autoLink="email|web"
-            android:textSize="15dip"/>
+            android:textSize="15sp"/>
     </ScrollView>
     <TextView
         android:id="@+id/contributors_togglebutton"

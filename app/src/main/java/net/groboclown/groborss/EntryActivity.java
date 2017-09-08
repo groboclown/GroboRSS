@@ -1,4 +1,4 @@
-/**
+/*
  * Sparse rss
  * <p>
  * Copyright (c) 2010-2012 Stefan Handschuh
@@ -24,10 +24,6 @@
 
 package net.groboclown.groborss;
 
-import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
@@ -41,7 +37,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -72,22 +67,14 @@ import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import net.groboclown.groborss.handler.EntryTextBuilder;
-import net.groboclown.groborss.util.ThemeSetting;
 import net.groboclown.groborss.provider.FeedData;
+import net.groboclown.groborss.util.ThemeSetting;
+
+import java.util.Date;
 
 public class EntryActivity
         extends Activity {
     private static final String TAG = "EntryActivity";
-
-	/*
-    private static final String NEWLINE = "\n";
-	
-	private static final String BR = "<br/>";
-	*/
-
-    private static final String TEXT_HTML = "text/html";
-
-    private static final String UTF8 = "utf-8";
 
     private static final String OR_DATE = " or date ";
 
@@ -98,26 +85,6 @@ public class EntryActivity
     private static final String ASC = "date asc, _id desc limit 1";
 
     private static final String DESC = "date desc, _id asc limit 1";
-
-    private static final String CSS
-            = "<head><style type=\"text/css\">body {max-width: 100%}\nimg {max-width: 100%; height: auto;}\ndiv[style] {max-width: 100%;}\npre {white-space: pre-wrap;}</style></head>";
-
-    private static final String FONT_START = CSS + "<body link=\"#97ACE5\" text=\"#C0C0C0\">";
-
-    private static final String FONT_FONTSIZE_START = CSS
-            + "<body link=\"#97ACE5\" text=\"#C0C0C0\"><font size=\"+";
-
-    private static final String FONTSIZE_START = "<font size=\"+";
-
-    private static final String FONTSIZE_MIDDLE = "\">";
-
-    private static final String FONTSIZE_END = "</font>";
-
-    private static final String FONT_END = "</font><br/><br/><br/><br/></body>";
-
-    private static final String BODY_START = "<body>";
-
-    private static final String BODY_END = "<br/><br/><br/><br/></body>";
 
     private static final int BUTTON_ALPHA = 180;
 
@@ -188,8 +155,6 @@ public class EntryActivity
     private LayoutParams layoutParams;
 
     private View content;
-
-    private SharedPreferences preferences;
 
     private boolean localPictures;
 
@@ -301,7 +266,7 @@ public class EntryActivity
         webView0 = new WebView(this);
         webView0.setOnKeyListener(onKeyEventListener);
 
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         final boolean gestures = preferences.getBoolean(Strings.SETTINGS_GESTURESENABLED, true);
 
