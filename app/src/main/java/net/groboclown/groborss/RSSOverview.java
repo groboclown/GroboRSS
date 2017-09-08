@@ -60,7 +60,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import net.groboclown.groborss.action.OpmlImportAction;
-import net.groboclown.groborss.util.ThemeSetting;
+import net.groboclown.groborss.theme.ThemeSetting;
 
 import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.provider.OPML;

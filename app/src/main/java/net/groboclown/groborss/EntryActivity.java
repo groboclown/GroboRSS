@@ -26,8 +26,6 @@
 package net.groboclown.groborss;
 
 import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -42,7 +40,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -73,7 +70,7 @@ import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import net.groboclown.groborss.handler.EntryTextBuilder;
-import net.groboclown.groborss.util.ThemeSetting;
+import net.groboclown.groborss.theme.ThemeSetting;
 import net.groboclown.groborss.provider.FeedData;
 
 public class EntryActivity extends Activity {

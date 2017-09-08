@@ -31,25 +31,27 @@ dependencies {
     //androidTestCompile('com.android.support.detail_layout.espresso:espresso-core:2.2.2', {
     //    exclude group: 'com.android.support', module: 'support-annotations'
     //})
-    compile 'com.android.support:appcompat-v7:26.0.1'
-    compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:1.9.5'
 
     // AndroidJUnitRunner and JUnit Rules
+
+    // Espresso dependencies
+
+    // The following Espresso dependency can be either "compile"
+    // or "androidTestCompile", depending on your app's implementation
+    compile 'com.android.support:appcompat-v7:26.0.1'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.android.support:support-v4:26.0.1'
+    compile 'com.android.support:recyclerview-v7:26.0.1'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.9.5'
     androidTestCompile 'com.android.support:appcompat-v7:26.0.1'
     androidTestCompile 'com.android.support.test:runner:1.0.0'
     androidTestCompile 'com.android.support.test:rules:1.0.0'
-
-    // Espresso dependencies
     androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.0'
     androidTestCompile 'com.android.support.test.espresso:espresso-contrib:3.0.0'
     androidTestCompile 'com.android.support.test.espresso:espresso-intents:3.0.0'
     androidTestCompile 'com.android.support.test.espresso:espresso-accessibility:3.0.0'
     androidTestCompile 'com.android.support.test.espresso:espresso-web:3.0.0'
     androidTestCompile 'com.android.support.test.espresso.idling:idling-concurrent:3.0.0'
-
-    // The following Espresso dependency can be either "compile"
-    // or "androidTestCompile", depending on your app's implementation
     androidTestCompile 'com.android.support.test.espresso:espresso-idling-resource:3.0.0'
 }

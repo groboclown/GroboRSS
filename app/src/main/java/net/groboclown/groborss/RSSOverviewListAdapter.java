@@ -1,4 +1,4 @@
-/**
+/*
  * Sparse rss
  * 
  * Copyright (c) 2010-2012 Stefan Handschuh

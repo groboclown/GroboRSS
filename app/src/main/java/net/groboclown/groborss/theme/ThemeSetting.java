@@ -1,4 +1,4 @@
-/**
+/*
  * GroboRSS
  *
  * Copyright (c) 2017 Groboclown
@@ -23,11 +23,12 @@
  *
  */
 
-package net.groboclown.groborss.util;
+package net.groboclown.groborss.theme;
 
 import android.app.Activity;
 import android.content.Context;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 
 import net.groboclown.groborss.R;
 
@@ -37,18 +38,39 @@ public class ThemeSetting {
     // Can be cached, becase we require a restart in order to change the theme.
     private static Boolean LIGHT_THEME;
 
+    /**
+     *
+     * @param context caller's context
+     * @return true if a light background theme
+     * @see #getEntryTheme(Context) use this to skin the web view instead.
+     */
+    @Deprecated
     public static boolean isLightColorMode(Context context) {
-        return (ThemeSetting.isLightTheme(context) ||
+        return (isLightTheme(context) ||
                 PreferenceManager.getDefaultSharedPreferences(context).getBoolean(Strings.SETTINGS_BLACKTEXTONWHITE, false));
     }
 
 
-    public static void setTheme(Activity activity) {
-        if (isLightTheme(activity)) {
-            activity.setTheme(R.style.Theme_Light);
-        } else {
-            activity.setTheme(R.style.Theme_Dark);
+    @NonNull
+    public static AppTheme getAppTheme(Context context) {
+        if (isLightTheme(context)) {
+            return AppTheme.LIGHT;
         }
+        return AppTheme.DARK;
+    }
+
+
+    @NonNull
+    public static EntryTheme getEntryTheme(Context context) {
+        if (isLightColorMode(context)) {
+            return EntryTheme.BRIGHT;
+        }
+        return EntryTheme.DARK;
+    }
+
+
+    public static void setTheme(Activity activity) {
+        getAppTheme(activity).setTheme(activity);
     }
 
 

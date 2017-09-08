@@ -1,7 +1,7 @@
 package net.groboclown.groborss;
 
 import net.groboclown.groborss.provider.FeedData;
-import net.groboclown.groborss.util.ThemeSetting;
+import net.groboclown.groborss.theme.ThemeSetting;
 
 import android.content.ContentValues;
 import android.database.Cursor;

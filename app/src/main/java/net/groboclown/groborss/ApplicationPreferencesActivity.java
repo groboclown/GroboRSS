@@ -38,7 +38,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
 import net.groboclown.groborss.service.RefreshService;
-import net.groboclown.groborss.util.ThemeSetting;
+import net.groboclown.groborss.theme.ThemeSetting;
 
 public class ApplicationPreferencesActivity extends PreferenceActivity {
 	@Override

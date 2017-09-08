@@ -51,7 +51,7 @@ import android.widget.TabHost;
 import android.widget.TabHost.OnTabChangeListener;
 import android.widget.TextView;
 
-import net.groboclown.groborss.util.ThemeSetting;
+import net.groboclown.groborss.theme.ThemeSetting;
 
 import net.groboclown.groborss.provider.FeedData;
 import net.groboclown.groborss.service.FetcherService;

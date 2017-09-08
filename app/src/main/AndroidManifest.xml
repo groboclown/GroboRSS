@@ -1,31 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-    package="net.groboclown.groborss"
-    android:versionCode="87" android:versionName="1.7"
-    android:installLocation="auto">
+          package="net.groboclown.groborss"
+          android:installLocation="auto"
+          android:versionCode="87"
+          android:versionName="1.7">
 
-    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="14"/>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="14"/>
 
-    <!-- Android 1.5 requires this  -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- Android 1.5 requires this -->
     <uses-permission android:name="net.groboclown.groborss.READFEEDS"/>
     <uses-permission android:name="net.groboclown.groborss.WRITEFEEDS"/>
+
     <permission
         android:name="net.groboclown.groborss.READFEEDS"
-        android:protectionLevel="normal"
+        android:description="@string/permission_readfeeds_description"
         android:label="@string/permission_readfeeds"
-        android:description="@string/permission_readfeeds_description"/>
+        android:protectionLevel="normal"/>
     <permission
         android:name="net.groboclown.groborss.WRITEFEEDS"
-        android:protectionLevel="normal"
+        android:description="@string/permission_writefeeds_description"
         android:label="@string/permission_writefeeds"
-        android:description="@string/permission_writefeeds_description"/>
+        android:protectionLevel="normal"/>
 
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application
         android:allowBackup="true"
@@ -33,73 +40,108 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Light" >
-        <service android:name="net.groboclown.groborss.service.RefreshService"/>
-        <service android:name="net.groboclown.groborss.service.FetcherService"/>
+        android:theme="@style/Theme.Light">
+        <service android:name=".service.RefreshService"/>
+        <service android:name=".service.FetcherService"/>
+
         <provider
             android:name=".provider.FeedDataContentProvider"
             android:authorities="net.groboclown.groborss.provider.FeedData"
             android:readPermission="net.groboclown.groborss.READFEEDS"
             android:writePermission="net.groboclown.groborss.WRITEFEEDS"/>
-        <activity android:name=".FeedPrefsActivity" />
-        <activity android:name=".EmptyActivity" />
-        <activity android:name=".MainTabActivity" android:label="@string/app_name" android:launchMode="singleTask">
+
+        <activity android:name=".FeedPrefsActivity"/>
+        <activity android:name=".EmptyActivity"/>
+        <activity
+            android:name=".MainTabActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".RSSOverview" android:launchMode="singleTask" />
-        <activity android:name=".EntriesListActivity" android:launchMode="singleTask">
+        <activity
+            android:name=".RSSOverview"
+            android:launchMode="singleTask"/>
+        <activity
+            android:name=".EntriesListActivity"
+            android:launchMode="singleTask">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.VIEW"/>
+
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.dir/vnd.feeddata.entry" />
+
+                <data android:mimeType="vnd.android.cursor.dir/vnd.feeddata.entry"/>
             </intent-filter>
         </activity>
-        <activity android:name=".EntryActivity" android:launchMode="singleTask">
+        <activity
+            android:name=".EntryActivity"
+            android:launchMode="singleTask">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.VIEW"/>
+
                 <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="vnd.android.cursor.item/vnd.feeddata.entry" />
+
+                <data android:mimeType="vnd.android.cursor.item/vnd.feeddata.entry"/>
             </intent-filter>
         </activity>
         <activity android:name=".ApplicationPreferencesActivity"/>
         <activity android:name=".widget.WidgetConfigActivity">
             <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
             </intent-filter>
         </activity>
-        <activity android:name=".FeedConfigActivity" android:theme="@style/Theme.Dialog">
+        <activity
+            android:name=".FeedConfigActivity"
+            android:theme="@style/Theme.Dialog">
             <intent-filter>
                 <action android:name="android.intent.action.EDIT"/>
+
                 <category android:name="android.intent.category.DEFAULT"/>
+
                 <data android:mimeType="vnd.android.cursor.item/vnd.feeddata.feed"/>
             </intent-filter>
             <intent-filter>
-                <action android:name="android.intent.action.INSERT" />
+                <action android:name="android.intent.action.INSERT"/>
+
                 <category android:name="android.intent.category.DEFAULT"/>
+
                 <data android:mimeType="vnd.android.cursor.dir/vnd.feeddata.feed"/>
             </intent-filter>
         </activity>
-        <receiver android:name=".widget.SparseRSSAppWidgetProvider" >
+
+        <receiver android:name=".widget.SparseRSSAppWidgetProvider">
             <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="net.groboclown.groborss.FEEDUPDATED" />
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                <action android:name="net.groboclown.groborss.FEEDUPDATED"/>
             </intent-filter>
-            <meta-data android:name="android.appwidget.provider"
-                android:resource="@xml/widgetinfo" />
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widgetinfo"/>
         </receiver>
-        <receiver android:name=".RefreshBroadcastReceiver" >
+        <receiver android:name=".RefreshBroadcastReceiver">
             <intent-filter>
-                <action android:name="net.groboclown.groborss.REFRESH" />
-            </intent-filter>
-        </receiver>
-        <receiver android:name=".BootCompletedBroadcastReceiver" >
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="net.groboclown.groborss.REFRESH"/>
             </intent-filter>
         </receiver>
+        <receiver android:name=".BootCompletedBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".RssOverviewActivity"
+            android:label="@string/title_activity_rss_overview">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

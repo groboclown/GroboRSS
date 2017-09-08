@@ -260,4 +260,5 @@
     <string name="permission_readfeeds_description">Allows the application to read GroboRSS feeds and entries.</string>
     <string name="permission_writefeeds">Write feed data</string>
     <string name="permission_writefeeds_description">Allows the application to write GroboRSS feeds and entries.</string>
+    <string name="title_activity_rss_overview">RssOverviewActivity</string>
 </resources>
