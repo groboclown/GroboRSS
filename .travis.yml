@@ -36,7 +36,7 @@ cache:
 # License requirements
 before_install:
   - mkdir -p "$ANDROID_HOME/licenses" || true
-  - cp ./android-licenses/ "$ANDROID_HOME/licenses/"
+  - test -d ./android-licenses && cp ./android-licenses/ "$ANDROID_HOME/licenses/"
   # Fix for travis-ci bug #6617
   - echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
   - echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
