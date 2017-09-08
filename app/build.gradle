@@ -1,3 +1,6 @@
+
+
+
 apply plugin: 'com.android.application'
 
 android {
@@ -25,6 +28,16 @@ android {
         abortOnError false
     }
 }
+
+project.afterEvaluate {
+    tasks.replace("processDebugAndroidTestResources").doLast {
+        println 'Skipped since connected tests do not exist'
+    }
+    tasks.replace("packageDebugAndroidTest").doLast {
+        println 'Skipped since connected tests do not exist'
+    }
+}
+
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
