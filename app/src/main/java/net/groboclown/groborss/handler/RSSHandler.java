@@ -1,4 +1,4 @@
-/**
+/*
  * Sparse rss
  *
  * Copyright (c) 2010-2012 Stefan Handschuh
@@ -476,12 +476,12 @@ public class RSSHandler extends DefaultHandler {
 
 				String enclosureString = null;
 				
-				StringBuilder existanceStringBuilder = new StringBuilder(FeedData.EntryColumns.LINK).append(Strings.DB_ARG);
+				StringBuilder existenceStringBuilder = new StringBuilder(FeedData.EntryColumns.LINK).append(Strings.DB_ARG);
 				
 				if (enclosure != null && enclosure.length() > 0) {
 					enclosureString = enclosure.toString();
 					values.put(FeedData.EntryColumns.ENCLOSURE, enclosureString);
-					existanceStringBuilder.append(Strings.DB_AND).append(FeedData.EntryColumns.ENCLOSURE).append(Strings.DB_ARG);
+					existenceStringBuilder.append(Strings.DB_AND).append(FeedData.EntryColumns.ENCLOSURE).append(Strings.DB_ARG);
 				}
 
 				String guidString = null;
@@ -489,7 +489,7 @@ public class RSSHandler extends DefaultHandler {
 				if (guid != null && guid.length() > 0) {
 					guidString = guid.toString();
 					values.put(FeedData.EntryColumns.GUID, guidString);
-					existanceStringBuilder.append(Strings.DB_AND).append(FeedData.EntryColumns.GUID).append(Strings.DB_ARG);
+					existenceStringBuilder.append(Strings.DB_AND).append(FeedData.EntryColumns.GUID).append(Strings.DB_ARG);
 				}
 				
 				String entryLinkString = Strings.EMPTY; // don't set this to null as we need *some* value
@@ -592,11 +592,12 @@ public class RSSHandler extends DefaultHandler {
                                         .append(pullSrcText);
                             }
                             addlDescription.append("</p>");
-                            values.put(
-                                    FeedData.EntryColumns.ABSTRACT,
-                                    descriptionString + addlDescription);
+                            descriptionString += addlDescription;
                         }
                     }
+                    values.put(
+                            FeedData.EntryColumns.ABSTRACT,
+                            descriptionString);
                 }
 
                 String[] existenceValues = enclosureString != null ? (guidString != null ? new String[] {entryLinkString, enclosureString, guidString}: new String[] {entryLinkString, enclosureString}) : (guidString != null ? new String[] {entryLinkString, guidString} : new String[] {entryLinkString});
@@ -604,7 +605,7 @@ public class RSSHandler extends DefaultHandler {
 				boolean skip = false;
 				
 				if (!efficientFeedParsing) {
-					if (context.getContentResolver().update(feedEntiresUri, values, existanceStringBuilder.toString()+" AND "+FeedData.EntryColumns.DATE+"<"+entryDate.getTime(), existenceValues) == 1) {
+					if (context.getContentResolver().update(feedEntiresUri, values, existenceStringBuilder.toString()+" AND "+FeedData.EntryColumns.DATE+"<"+entryDate.getTime(), existenceValues) == 1) {
 						newCount++;
 						skip = true;
 					} else {
@@ -613,7 +614,7 @@ public class RSSHandler extends DefaultHandler {
 					}
 				}
 				
-				if (!skip && ((entryLinkString.isEmpty() && guidString == null) || context.getContentResolver().update(feedEntiresUri, values, existanceStringBuilder.toString(), existenceValues) == 0)) {
+				if (!skip && ((entryLinkString.isEmpty() && guidString == null) || context.getContentResolver().update(feedEntiresUri, values, existenceStringBuilder.toString(), existenceValues) == 0)) {
 					values.put(FeedData.EntryColumns.LINK, entryLinkString);
 					if (entryDate == null) {
 						values.put(FeedData.EntryColumns.DATE, now--);

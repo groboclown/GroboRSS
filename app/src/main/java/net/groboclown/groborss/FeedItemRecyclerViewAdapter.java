@@ -33,22 +33,22 @@ import android.widget.TextView;
 
 import net.groboclown.groborss.FeedItemFragment.OnListFragmentInteractionListener;
 import net.groboclown.groborss.dummy.DummyContent.DummyItem;
+import net.groboclown.groborss.model.RssFeedModel;
 
 import java.util.List;
 
 /**
- * {@link RecyclerView.Adapter} that can display a {@link DummyItem} and makes a call to the
+ * {@link RecyclerView.Adapter} that can display a {@link RssFeedModel} and makes a call to the
  * specified {@link OnListFragmentInteractionListener}.
  * TODO: Replace the implementation with code for your data type.
  */
 public class FeedItemRecyclerViewAdapter
         extends RecyclerView.Adapter<FeedItemRecyclerViewAdapter.ViewHolder> {
 
-    private final List<DummyItem> mValues;
     private final OnListFragmentInteractionListener mListener;
 
     public FeedItemRecyclerViewAdapter(
-            List<DummyItem> items, OnListFragmentInteractionListener listener) {
+            List<RssFeedModel> items, OnListFragmentInteractionListener listener) {
         mValues = items;
         mListener = listener;
     }
@@ -88,13 +88,13 @@ public class FeedItemRecyclerViewAdapter
         public final View mView;
         public final TextView mIdView;
         public final TextView mContentView;
-        public DummyItem mItem;
+        public RssFeedModel mItem;
 
         public ViewHolder(View view) {
             super(view);
             mView = view;
-            mIdView = (TextView) view.findViewById(R.id.id);
-            mContentView = (TextView) view.findViewById(R.id.content);
+            mIdView = view.findViewById(R.id.id);
+            mContentView = view.findViewById(R.id.content);
         }
 
         @Override

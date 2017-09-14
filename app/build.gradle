@@ -1,3 +1,6 @@
+
+
+
 apply plugin: 'com.android.application'
 
 android {
@@ -26,6 +29,16 @@ android {
     }
 }
 
+project.afterEvaluate {
+    tasks.replace("processDebugAndroidTestResources").doLast {
+        println 'Skipped since connected tests do not exist'
+    }
+    tasks.replace("packageDebugAndroidTest").doLast {
+        println 'Skipped since connected tests do not exist'
+    }
+}
+
+
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     //androidTestCompile('com.android.support.detail_layout.espresso:espresso-core:2.2.2', {
@@ -42,8 +55,11 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:support-v4:26.0.1'
     compile 'com.android.support:recyclerview-v7:26.0.1'
+
+
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.9.5'
+
     androidTestCompile 'com.android.support:appcompat-v7:26.0.1'
     androidTestCompile 'com.android.support.test:runner:1.0.0'
     androidTestCompile 'com.android.support.test:rules:1.0.0'
@@ -54,4 +70,9 @@ dependencies {
     androidTestCompile 'com.android.support.test.espresso:espresso-web:3.0.0'
     androidTestCompile 'com.android.support.test.espresso.idling:idling-concurrent:3.0.0'
     androidTestCompile 'com.android.support.test.espresso:espresso-idling-resource:3.0.0'
+
+    // force the right version
+    androidTestCompile 'com.android.support:recyclerview-v7:26.0.1'
+    androidTestCompile 'com.android.support:design:26.0.1'
+    androidTestCompile 'com.android.support:transition:26.0.1'
 }

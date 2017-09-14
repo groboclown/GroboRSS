@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_alignParentBottom="true">
-            <ImageButton 
+            <ImageButton
                 android:layout_height="fill_parent"
                 android:id="@+id/prev_button"
                 android:layout_width="70dp"

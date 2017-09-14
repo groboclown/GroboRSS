@@ -76,7 +76,7 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 	private DateFormat timeFormat;
 	
 	public RSSOverviewListAdapter(Activity activity) {
-		super(activity, R.layout.feedlistitem, activity.managedQuery(FeedData.FeedColumns.CONTENT_URI, null, null, null, null));
+		super(activity, R.layout.feedlistitem, activity.managedQuery(FeedData.FeedColumns.CONTENT_URI, null, null, null, null), true);
 		nameColumnPosition = getCursor().getColumnIndex(FeedData.FeedColumns.NAME);
 		lastUpdateColumn = getCursor().getColumnIndex(FeedData.FeedColumns.LASTUPDATE);
 		idPosition = getCursor().getColumnIndex(FeedData.FeedColumns._ID);
@@ -93,7 +93,7 @@ public class RSSOverviewListAdapter extends ResourceCursorAdapter {
 			}
 			
 			@Override
-			public void postRun() {
+		 	public void postRun() {
 				if (getPostCount() > 1) { // enforce second run even if task is canceled
 					handler.postDelayed(updateTask, 1500);
 				}
