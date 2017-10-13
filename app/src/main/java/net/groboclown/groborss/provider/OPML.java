@@ -43,11 +43,14 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Xml;
 
 import net.groboclown.groborss.Strings;
 
 public class OPML {
+	private static final String TAG = "OPML";
+
 	private static final String START = "<?xml version=\"1.0\" encoding=\"utf-8\"?><opml version=\"1.1\"><head><title>Sparse RSS export</title><dateCreated>";
 	
 	private static final String AFTERDATE = "</dateCreated></head><body>";
@@ -72,7 +75,7 @@ public class OPML {
 		Xml.parse(new InputStreamReader(new FileInputStream(filename)), parser);
 	}
 	
-	protected static void importFromInputStream(InputStream inputStream, SQLiteDatabase database) {
+	private static void importFromInputStream(InputStream inputStream, SQLiteDatabase database) {
 		parser.context = null;
 		parser.database = database;
 		try {
@@ -80,20 +83,22 @@ public class OPML {
 			Xml.parse(new InputStreamReader(inputStream), parser);
 			
 			/** This is ok since the database is empty */
-			database.execSQL(new StringBuilder("UPDATE ").append(FeedDataContentProvider.TABLE_FEEDS).append(" SET ").append(FeedData.FeedColumns.PRIORITY).append('=').append(FeedData.FeedColumns._ID).append("-1").toString());
+			database.execSQL("UPDATE " + FeedDataContentProvider.TABLE_FEEDS + " SET "
+					+ FeedData.FeedColumns.PRIORITY + '=' + FeedData.FeedColumns._ID + "-1");
 			database.setTransactionSuccessful();
 		} catch (Exception e) {
-			
+			Log.i(TAG, "Problem importing OPML file", e);
 		} finally {
 			database.endTransaction();
 		}
 	}
 	
-	protected static void importFromFile(File file, SQLiteDatabase database) {
+	static void importFromFile(File file, SQLiteDatabase database) {
 		try {
 			importFromInputStream(new FileInputStream(file), database);
 		} catch (FileNotFoundException e) {
 			// do nothing
+            Log.i(TAG, "Problem importing OPML file", e);
 		}
 	}
 	
@@ -107,13 +112,13 @@ public class OPML {
 		}
 	}
 	
-	protected static void exportToFile(String filename, SQLiteDatabase database) {
+	static void exportToFile(String filename, SQLiteDatabase database) {
 		Cursor cursor = database.query(FeedDataContentProvider.TABLE_FEEDS, new String[] {FeedData.FeedColumns._ID, FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY}, null, null, null, null, FeedData.FEED_DEFAULTSORTORDER);
 		
 		try {
 			writeData(filename, cursor);
 		} catch (Exception e) {
-			
+            Log.i(TAG, "Problem exporting OPML file " + filename, e);
 		}
 		cursor.close();
 	}
