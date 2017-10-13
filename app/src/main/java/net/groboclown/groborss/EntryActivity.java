@@ -127,6 +127,8 @@ public class EntryActivity
 
     private static final String BRACKET = " (";
 
+    private static final char CLOSE_BRACKET = '}';
+
     private int titlePosition;
 
     private int datePosition;
@@ -496,7 +498,7 @@ public class EntryActivity
             String author = entryCursor.getString(authorPosition);
 
             if (author != null) {
-                dateStringBuilder.append(BRACKET).append(author).append(')');
+                dateStringBuilder.append(BRACKET).append(author).append(CLOSE_BRACKET);
             }
 
             ((TextView) findViewById(R.id.entry_date)).setText(dateStringBuilder);
