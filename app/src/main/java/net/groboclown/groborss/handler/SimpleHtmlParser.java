@@ -193,6 +193,10 @@ class SimpleHtmlParser {
 
         private HtmlBit buildNextAttributeKey(int keyStartPos, int keyEndPos) {
             cached = null;
+            if (mAttributeCount >= HTML_POS_ATTR_COUNT) {
+                // Too many attributes.  Just ignore it.
+                return this;
+            }
             mAttributeCount++;
             mCurrentAttributeIndex++;
             mCurrentAttributePos += HTML_POS_ATTR_SIZE;

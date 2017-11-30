@@ -75,6 +75,47 @@ public class SimpleEntryTextParserTest {
         assertTagEquals(bits, 0, "ab");
     }
 
+    @Test
+    public void parse_tooManyTagsFromBadArgument() {
+        // This was observed in an NPR feed.
+        // This goes beyond the 30 tag mark.
+        List<SimpleHtmlParser.HtmlBit> bits = parse("<a b='T's 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v w x y z/>");
+        assertThat(bits.size(), is(1));
+        assertTagState(bits, 0, true, true);
+        assertTagEquals(bits, 0 , "a",
+                "b", "T", // arg 1
+                "s", null,
+                "0", null,
+                "1", null,
+                "2", null,
+                "3", null,
+                "4", null,
+                "5", null,
+                "6", null,
+                "7", null, // arg 10
+                "8", null,
+                "9", null,
+                "a", null,
+                "b", null,
+                "c", null,
+                "d", null,
+                "e", null,
+                "f", null,
+                "g", null,
+                "h", null, // arg 20
+                "i", null,
+                "j", null,
+                "k", null,
+                "l", null,
+                "m", null,
+                "n", null,
+                "o", null,
+                "p", null,
+                "q", null,
+                "r", null // arg 30
+                );
+    }
+
     private static void assertPlainText(List<SimpleHtmlParser.HtmlBit> bits, int index, String text) {
         assertTrue("No such index " + index, bits.size() > index);
         assertPlainText("bit " + index, bits.get(index), text);
@@ -96,13 +137,13 @@ public class SimpleEntryTextParserTest {
         int index = 0;
         // assume already at start of attributes.
         while (bit.nextAttribute()) {
-            assertThat(msg + ": attributes for " + bit,
+            assertThat(msg + ": attributes for " + bit + " index " + (index / 2),
                     index < attributeKeyValues.length,
                     is(true));
-            assertThat(msg + ": attribute key",
+            assertThat(msg + ": attribute[" + (index / 2) + "] key",
                     bit.getCurrentKey(),
                     is(attributeKeyValues[index++]));
-            assertThat(msg + ": attribute value for " + bit.getCurrentKey(),
+            assertThat(msg + ": attribute[" + (index / 2) + "] value for " + bit.getCurrentKey(),
                     bit.getCurrentValue(),
                     is(attributeKeyValues[index++]));
         }
