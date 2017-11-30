@@ -1,4 +1,4 @@
-/**
+/*
  * GroboRSS
  *
  * Copyright (c) 2017 Groboclown
@@ -244,7 +244,7 @@ public class EntryTextBuilder {
 
 
 
-
+    // TODO this doesn't prevent against web bugs when cached images is on.
     private static final Pattern[] TRACKER_SRC_URL_STYLES = {
             Pattern.compile("/tracking/[^/]*rss-pixel.png\\?")
     };
@@ -257,6 +257,7 @@ public class EntryTextBuilder {
 
 
         // Remove web bugs
+        // TODO move into RSSHandler
         String src = current.getAttributeValue("src");
         if (mPreferences.getBoolean(Strings.SETTINGS_STRIP_WEB_BUGS, false) && isWebBug(current, src)) {
             // Replace the web bug with fun text.
@@ -331,8 +332,14 @@ public class EntryTextBuilder {
 
 
     // A trivial BBCode converter.  Implemented such that it doesn't
-    // interfere with the HTML stuff.
+    // interfere with the HTML stuff.  Note that this will corrupt some news text
+    // that includes a quote like 'He said, "[I] didn't like it."', so there's a
+    // special case just for that.
     static String convertBBCode(String src) {
+        if (src.contains("[I]") && ! src.contains("[/I]")) {
+            // To work around the news text issue.
+            return src;
+        }
         return src
                 .replaceAll("(?i)\\[(/?(b|u|i|s))\\]", "<$1>")
                 .replaceAll("(?i)\\[img\\](https?://[^ \n\r\t\\[\\]]+)\\[/img\\]", "<img src='$1'>")
@@ -340,7 +347,4 @@ public class EntryTextBuilder {
                 .replaceAll("(?i)\\[code\\]([^\\]]*)\\[/code\\]", "<pre>$1</pre>")
                 .replaceAll("(?i)\\[/?(center|color|size|img|url|pre)[^\\]]*\\]", "");
     }
-
-
-
 }
