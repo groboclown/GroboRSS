@@ -1,4 +1,4 @@
-/**
+/*
  * Sparse rss
  * 
  * Copyright (c) 2010-2012 Stefan Handschuh
@@ -29,30 +29,48 @@ import java.io.File;
 
 import net.groboclown.groborss.handler.PictureFilenameFilter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.support.annotation.NonNull;
 
 public class FeedData {
 	public static final String CONTENT = "content://";
 	
 	public static final String AUTHORITY = "net.groboclown.groborss.provider.FeedData";
 	
-	private static final String TYPE_PRIMARY_KEY = "INTEGER PRIMARY KEY AUTOINCREMENT";
+	static final String TYPE_PRIMARY_KEY = "INTEGER PRIMARY KEY AUTOINCREMENT";
 	
 	protected static final String TYPE_TEXT = "TEXT";
+
+	static final String TYPE_TEXT_UNIQUE = "TEXT UNIQUE";
 	
 	protected static final String TYPE_DATETIME = "DATETIME";
 	
 	protected static final String TYPE_INT = "INT";
 
+	static final String TYPE_INT_7 = "INTEGER(7)";
+
+	static final String TYPE_BLOB = "BLOB";
+
 	protected static final String TYPE_BOOLEAN = "INTEGER(1)";
 	
 	public static final String FEED_DEFAULTSORTORDER = FeedColumns.PRIORITY;
-	
-	public static class FeedColumns implements BaseColumns {
-		public static final Uri CONTENT_URI = Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/feeds").toString());
+
+	static final String TABLE_FEEDS = "feeds";
+
+	static final String TABLE_ENTRIES = "entries";
+
+
+	static final DbTable DB_TABLE_FEEDS = new FeedColumns();
+	static final DbTable DB_TABLE_ENTRIES = new EntryColumns();
+	public static final DbTable[] TABLES = { DB_TABLE_FEEDS, DB_TABLE_ENTRIES };
+
+
+	public static class FeedColumns extends DbTable implements BaseColumns {
+		public static final Uri CONTENT_URI = parseUri(CONTENT + AUTHORITY + "/feeds");
 		
 		public static final String URL = "url";
 		
@@ -84,18 +102,22 @@ public class FeedData {
 		
 		public static final String[] COLUMNS = new String[] {_ID, URL, NAME, LASTUPDATE, ICON, ERROR, PRIORITY, FETCHMODE, REALLASTUPDATE, ALERT_RINGTONE, OTHER_ALERT_RINGTONE, SKIP_ALERT, WIFIONLY, HOMEPAGE, ENTRY_LINK_IMG_PATTERN};
 		
-		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "TEXT UNIQUE", TYPE_TEXT, TYPE_DATETIME, "BLOB", TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_DATETIME, TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT};
-		
-		public static final Uri CONTENT_URI(String feedId) {
-			return Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/feeds/").append(feedId).toString());
+		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, TYPE_TEXT_UNIQUE, TYPE_TEXT, TYPE_DATETIME, TYPE_BLOB, TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_DATETIME, TYPE_TEXT, TYPE_INT, TYPE_INT, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT};
+
+		private FeedColumns() {
+			super(TABLE_FEEDS, COLUMNS, TYPES);
+		}
+
+		public static Uri CONTENT_URI(String feedId) {
+			return parseUri(CONTENT + AUTHORITY + "/feeds/" + feedId);
 		}
 		
-		public static final Uri CONTENT_URI(long feedId) {
-			return Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/feeds/").append(feedId).toString());
+		public static Uri CONTENT_URI(long feedId) {
+			return parseUri(CONTENT + AUTHORITY + "/feeds/" + feedId);
 		}
 	}
 	
-	public static class EntryColumns implements BaseColumns {
+	public static class EntryColumns extends DbTable implements BaseColumns {
 		public static final String FEED_ID = "feedid";
 		
 		public static final String TITLE = "title";
@@ -120,24 +142,35 @@ public class FeedData {
 		
 		public static final String[] COLUMNS = new String[] {_ID, FEED_ID, TITLE, ABSTRACT, DATE, READDATE, LINK, FAVORITE, ENCLOSURE, GUID, AUTHOR, LINK_IMG_URL};
 		
-		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, "INTEGER(7)", TYPE_TEXT, TYPE_TEXT, TYPE_DATETIME, TYPE_DATETIME, TYPE_TEXT, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT, TYPE_TEXT, TYPE_TEXT};
+		public static final String[] TYPES = new String[] {TYPE_PRIMARY_KEY, TYPE_INT_7, TYPE_TEXT, TYPE_TEXT, TYPE_DATETIME, TYPE_DATETIME, TYPE_TEXT, TYPE_BOOLEAN, TYPE_TEXT, TYPE_TEXT, TYPE_TEXT, TYPE_TEXT};
 
-		public static Uri CONTENT_URI = Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/entries").toString());
+		public static Uri CONTENT_URI = parseUri(CONTENT + AUTHORITY + "/entries");
 		
-		public static Uri FAVORITES_CONTENT_URI = Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/favorites").toString());
+		public static Uri FAVORITES_CONTENT_URI = parseUri(CONTENT + AUTHORITY + "/favorites");
+
+		private EntryColumns() {
+			super(TABLE_ENTRIES, COLUMNS, TYPES);
+		}
 
 		public static Uri CONTENT_URI(String feedId) {
-			return Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/feeds/").append(feedId).append("/entries").toString());
+			return parseUri(CONTENT + AUTHORITY + "/feeds/" + feedId + "/entries");
 		}
 
 		public static Uri ENTRY_CONTENT_URI(String entryId) {
-			return Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append("/entries/").append(entryId).toString());
+			return parseUri(CONTENT + AUTHORITY + "/entries/" + entryId);
 		}
 		
 		public static Uri PARENT_URI(String path) {
-			return Uri.parse(new StringBuilder(CONTENT).append(AUTHORITY).append(path.substring(0, path.lastIndexOf('/'))).toString());
+			return parseUri(CONTENT + AUTHORITY + path.substring(0, path.lastIndexOf('/')));
 		}
 		
+	}
+
+
+	public static DbTableFacadeFactory getActivityFactory(@NonNull Activity source) {
+		return new DbTableFacadeFactory.ContextFactory(source,
+				TABLE_FEEDS, FeedColumns.CONTENT_URI,
+				TABLE_ENTRIES, EntryColumns.CONTENT_URI);
 	}
 		
 	private static String[] IDPROJECTION = new String[] {FeedData.EntryColumns._ID};
@@ -184,4 +217,16 @@ public class FeedData {
 	}
 	
 
+	// Unit test compatibility
+    // When run in a unit test, the Uri class isn't implemented,
+    // so it generates a runtime exception.  Unit tests don't care
+    // about this, so just return null.
+	private static Uri parseUri(String s) {
+		try {
+			return Uri.parse(s);
+		} catch (RuntimeException e) {
+			// ignore
+			return null;
+		}
+	}
 }

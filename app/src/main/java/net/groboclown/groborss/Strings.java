@@ -88,6 +88,10 @@ public final class Strings {
 	public static final String SETTINGS_EFFICIENTFEEDPARSING = "efficientfeedparsing";
 
 	public static final String SETTINGS_STRIP_WEB_BUGS = "pictures.stripwebbugs";
+
+	public static final String SETTINGS_WIDGETENTRYCOUNT = "widget.entrycount";
+
+	public static final String SETTINGS_WIDGETVISIBLEFEEDS = "widget.visiblefeeds";
 	
 	public static final String ACTION_REFRESHFEEDS = PACKAGE + ".REFRESH";
 	

@@ -48,6 +48,8 @@ import android.util.Xml;
 
 import net.groboclown.groborss.Strings;
 
+import static net.groboclown.groborss.provider.FeedData.TABLE_FEEDS;
+
 public class OPML {
 	private static final String TAG = "OPML";
 
@@ -83,7 +85,7 @@ public class OPML {
 			Xml.parse(new InputStreamReader(inputStream), parser);
 			
 			/** This is ok since the database is empty */
-			database.execSQL("UPDATE " + FeedDataContentProvider.TABLE_FEEDS + " SET "
+			database.execSQL("UPDATE " + TABLE_FEEDS + " SET "
 					+ FeedData.FeedColumns.PRIORITY + '=' + FeedData.FeedColumns._ID + "-1");
 			database.setTransactionSuccessful();
 		} catch (Exception e) {
@@ -104,16 +106,17 @@ public class OPML {
 	
 	public static void exportToFile(String filename, Context context) throws IOException {
 		Cursor cursor = context.getContentResolver().query(FeedData.FeedColumns.CONTENT_URI, new String[] {FeedData.FeedColumns._ID, FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY}, null, null, null);
-		
-		try {
-			writeData(filename, cursor);
-		} finally {
-			cursor.close();
+		if (cursor != null) {
+			try {
+				writeData(filename, cursor);
+			} finally {
+				cursor.close();
+			}
 		}
 	}
 	
 	static void exportToFile(String filename, SQLiteDatabase database) {
-		Cursor cursor = database.query(FeedDataContentProvider.TABLE_FEEDS, new String[] {FeedData.FeedColumns._ID, FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY}, null, null, null, null, FeedData.FEED_DEFAULTSORTORDER);
+		Cursor cursor = database.query(TABLE_FEEDS, new String[] {FeedData.FeedColumns._ID, FeedData.FeedColumns.NAME, FeedData.FeedColumns.URL, FeedData.FeedColumns.WIFIONLY}, null, null, null, null, FeedData.FEED_DEFAULTSORTORDER);
 		
 		try {
 			writeData(filename, cursor);
@@ -194,7 +197,7 @@ public class OPML {
 						}
 						cursor.close();
 					} else { // this happens only, if the db is new and therefore empty
-						database.insert(FeedDataContentProvider.TABLE_FEEDS, null, values);
+						database.insert(TABLE_FEEDS, null, values);
 					}
 				}
 			}
@@ -215,8 +218,5 @@ public class OPML {
 				super.endDocument();
 			}
 		}
-		
-		
-		
 	}
 }

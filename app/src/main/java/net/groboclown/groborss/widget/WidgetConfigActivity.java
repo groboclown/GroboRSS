@@ -37,6 +37,7 @@ import android.preference.PreferenceCategory;
 import android.view.View;
 import android.view.View.OnClickListener;
 import net.groboclown.groborss.R;
+import net.groboclown.groborss.Strings;
 import net.groboclown.groborss.provider.FeedData;
 
 public class WidgetConfigActivity extends PreferenceActivity {
@@ -62,14 +63,14 @@ public class WidgetConfigActivity extends PreferenceActivity {
         addPreferencesFromResource(R.layout.widgetpreferences);
         setContentView(R.layout.widgetconfig);
         
-        final ListPreference entryCountPreference = (ListPreference) findPreference("widget.entrycount");
+        final ListPreference entryCountPreference = (ListPreference) findPreference(Strings.SETTINGS_WIDGETENTRYCOUNT);
         
-        final PreferenceCategory feedsPreferenceCategory = (PreferenceCategory) findPreference("widget.visiblefeeds");
+        final PreferenceCategory feedsPreferenceCategory = (PreferenceCategory) findPreference(Strings.SETTINGS_WIDGETVISIBLEFEEDS);
         
 		
 		Cursor cursor = this.getContentResolver().query(FeedData.FeedColumns.CONTENT_URI, new String[] {FeedData.FeedColumns._ID, NAMECOLUMN}, null, null, null);
 		
-		if (cursor.moveToFirst()) {
+		if (cursor != null && cursor.moveToFirst()) {
 			int[] ids = new int[cursor.getCount()+1];
 			
 			CheckBoxPreference checkboxPreference = new CheckBoxPreference(this);

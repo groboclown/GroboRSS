@@ -1,4 +1,4 @@
-/**
+/*
  * Sparse rss
  *
  * Copyright (c) 2010-2012 Stefan Handschuh
@@ -40,7 +40,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -57,14 +56,14 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import net.groboclown.groborss.action.JsonBackupAction;
+import net.groboclown.groborss.action.JsonRestoreAction;
+import net.groboclown.groborss.action.OpmlExportAction;
 import net.groboclown.groborss.action.OpmlImportAction;
-import net.groboclown.groborss.util.ThemeSetting;
-
 import net.groboclown.groborss.provider.FeedData;
-import net.groboclown.groborss.provider.OPML;
 import net.groboclown.groborss.service.RefreshService;
+import net.groboclown.groborss.util.ThemeSetting;
 
 // TODO "ListActivity" is essentially deprecated.
 // Need to use an AppCompatActivity, add a toolbar for the
@@ -73,7 +72,7 @@ import net.groboclown.groborss.service.RefreshService;
 public class RSSOverview extends ListActivity {
 	public static final int DIALOG_ERROR_FEEDIMPORT = 3;
 	
-	private static final int DIALOG_ERROR_FEEDEXPORT = 4;
+	public static final int DIALOG_ERROR_FEEDEXPORT = 4;
 	
 	private static final int DIALOG_ERROR_INVALIDIMPORTFILE = 5;
 	
@@ -135,6 +134,9 @@ public class RSSOverview extends ListActivity {
 				menu.add(0, CONTEXTMENU_SETTINGS_ID, Menu.NONE, R.string.contextmenu_settings);
 			}
         });
+
+        // TODO add performClick, to allow for accessiblity.
+
         getListView().setOnTouchListener(new OnTouchListener() {
         	private int dragedItem = -1;
         	
@@ -147,7 +149,7 @@ public class RSSOverview extends ListActivity {
         	private int minY = 25; // is the header size --> needs to be changed
         	
         	private ListView listView = getListView();
-        	
+
 			public boolean onTouch(View v, MotionEvent event) {
 				if (feedSort) {
 					int action = event.getAction();
@@ -438,20 +440,16 @@ public class RSSOverview extends ListActivity {
 				break;
 			}
 			case R.id.menu_export: {
-				// TODO allow selecting an output directory and name.
-				if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) ||Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
-					try {
-						String filename = Environment.getExternalStorageDirectory().toString() + "/grobo_rss_" + System.currentTimeMillis() + ".opml";
-						
-						OPML.exportToFile(filename, this);
-						Toast.makeText(this, String.format(getString(R.string.message_exportedto), filename), Toast.LENGTH_LONG).show();
-					} catch (Exception e) {
-						showDialog(DIALOG_ERROR_FEEDEXPORT);
-					}
-				} else {
-					showDialog(DIALOG_ERROR_EXTERNALSTORAGENOTAVAILABLE);
-				}
+				OpmlExportAction.exportOpml(this);
 				break;
+			}
+			case R.id.menu_restore: {
+                JsonRestoreAction.restoreJson(this);
+                break;
+			}
+			case R.id.menu_backup: {
+				JsonBackupAction.backupJson(this);
+                break;
 			}
 			case R.id.menu_enablefeedsort: {
 				setFeedSortEnabled(true);

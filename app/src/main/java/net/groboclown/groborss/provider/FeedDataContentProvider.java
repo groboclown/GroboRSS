@@ -1,4 +1,4 @@
-/**
+/*
  * Sparse rss
  * 
  * Copyright (c) 2010-2012 Stefan Handschuh
@@ -40,13 +40,19 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import net.groboclown.groborss.Strings;
 
+import static net.groboclown.groborss.provider.FeedData.DB_TABLE_ENTRIES;
+import static net.groboclown.groborss.provider.FeedData.DB_TABLE_FEEDS;
+import static net.groboclown.groborss.provider.FeedData.TABLE_ENTRIES;
+import static net.groboclown.groborss.provider.FeedData.TABLE_FEEDS;
+
 public class FeedDataContentProvider extends ContentProvider {
 	private static final String FOLDER = Environment.getExternalStorageDirectory()+"/groborss/";
-	
+
 	private static final String DATABASE_NAME = "groborss.db";
 	
 	private static final int DATABASE_VERSION = 17;
@@ -66,11 +72,7 @@ public class FeedDataContentProvider extends ContentProvider {
 	private static final int URI_FAVORITES = 7;
 	
 	private static final int URI_FAVORITES_ENTRY = 8;
-	
-	protected static final String TABLE_FEEDS = "feeds";
-	
-	private static final String TABLE_ENTRIES = "entries";
-	
+
 	private static final String ALTER_TABLE = "ALTER TABLE ";
 	
 	private static final String ADD = " ADD ";
@@ -78,7 +80,7 @@ public class FeedDataContentProvider extends ContentProvider {
 	private static final String EQUALS_ONE = "=1";
 
 	public static final String IMAGEFOLDER = Environment.getExternalStorageDirectory()+"/groborss/images/"; // faster than FOLDER+"images/"
-	
+
 	public static final File IMAGEFOLDER_FILE = new File(IMAGEFOLDER);
 	
 	private static final String BACKUPOPML = Environment.getExternalStorageDirectory()+"/groborss/backup.opml";
@@ -99,17 +101,18 @@ public class FeedDataContentProvider extends ContentProvider {
 		URI_MATCHER.addURI(FeedData.AUTHORITY, "favorites", URI_FAVORITES);
 		URI_MATCHER.addURI(FeedData.AUTHORITY, "favorites/#", URI_FAVORITES_ENTRY);
 	}
+
 	
 	private static class DatabaseHelper extends SQLiteOpenHelper {
-		public DatabaseHelper(Context context, String name, int version) {
+		DatabaseHelper(Context context, String name, int version) {
 			super(context, name, null, version);
 			context.sendBroadcast(new Intent(Strings.ACTION_UPDATEWIDGET));
 		}
 
 		@Override
 		public void onCreate(SQLiteDatabase database) {
-			database.execSQL(createTable(TABLE_FEEDS, FeedData.FeedColumns.COLUMNS, FeedData.FeedColumns.TYPES));
-			database.execSQL(createTable(TABLE_ENTRIES, FeedData.EntryColumns.COLUMNS, FeedData.EntryColumns.TYPES));
+			database.execSQL(createTable(DB_TABLE_FEEDS));
+			database.execSQL(createTable(DB_TABLE_ENTRIES));
 			
 			File backupFile = new File(BACKUPOPML);
 			
@@ -119,22 +122,18 @@ public class FeedDataContentProvider extends ContentProvider {
 			}
 		}
 		
-		private String createTable(String tableName, String[] columns, String[] types) {
-			if (tableName == null || columns == null || types == null || types.length != columns.length || types.length == 0) {
-				throw new IllegalArgumentException("Invalid parameters for creating table "+tableName);
-			} else {
-				StringBuilder stringBuilder = new StringBuilder("CREATE TABLE ");
-				
-				stringBuilder.append(tableName);
-				stringBuilder.append(" (");
-				for (int n = 0, i = columns.length; n < i; n++) {
-					if (n > 0) {
-						stringBuilder.append(", ");
-					}
-					stringBuilder.append(columns[n]).append(' ').append(types[n]);
+		private String createTable(DbTable table) {
+			StringBuilder stringBuilder = new StringBuilder("CREATE TABLE ");
+
+			stringBuilder.append(table.getTableName());
+			stringBuilder.append(" (");
+			for (int n = 0, i = table.getColumnCount(); n < i; n++) {
+				if (n > 0) {
+					stringBuilder.append(", ");
 				}
-				return stringBuilder.append(");").toString();
+				stringBuilder.append(table.getColumnName(i)).append(' ').append(table.getColumnType(i));
 			}
+			return stringBuilder.append(");").toString();
 		}
 
 		@Override
@@ -196,6 +195,7 @@ public class FeedDataContentProvider extends ContentProvider {
 			try {
 				database.execSQL(query);
 			} catch (Exception e) {
+				// FIXME report error
 			}
 		}
 
@@ -268,9 +268,9 @@ public class FeedDataContentProvider extends ContentProvider {
 					oldDatabaseFile.delete();
 					newDatabase.setTransactionSuccessful();
 					newDatabase.endTransaction();
-					OPML.exportToFile(BACKUPOPML, newDatabase);
+                    exportOpml(newDatabase);
 				} catch (Exception e) {
-					
+					// FIXME report the error
 				}
 				return newDatabase;
 			} else {
@@ -284,7 +284,7 @@ public class FeedDataContentProvider extends ContentProvider {
 	private String[] MAXPRIORITY = new String[] {"MAX("+FeedData.FeedColumns.PRIORITY+")"};
 
 	@Override
-	public int delete(Uri uri, String selection, String[] selectionArgs) {
+	public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
 		int option = URI_MATCHER.match(uri);
 		
 		String table = null;
@@ -307,7 +307,7 @@ public class FeedDataContentProvider extends ContentProvider {
 				
 				where.append(FeedData.FeedColumns._ID).append('=').append(feedId);
 				
-				/** Update the priorities */
+				/* Update the priorities */
 				Cursor priorityCursor = database.query(TABLE_FEEDS, PROJECTION_PRIORITY, FeedData.FeedColumns._ID+"="+feedId, null, null, null, null);
 				
 				if (priorityCursor.moveToNext()) {
@@ -359,7 +359,7 @@ public class FeedDataContentProvider extends ContentProvider {
 		int count = database.delete(table, where.toString(), selectionArgs);
 		
 		if (table == TABLE_FEEDS) { // == is ok here
-			OPML.exportToFile(BACKUPOPML, database);
+            exportOpml(database);
 		}
 		if (count > 0) {
 			getContext().getContentResolver().notifyChange(uri, null);
@@ -367,8 +367,8 @@ public class FeedDataContentProvider extends ContentProvider {
 		return count;
 	}
 
-	@Override
-	public String getType(Uri uri) {
+    @Override
+	public String getType(@NonNull Uri uri) {
 		int option = URI_MATCHER.match(uri);
 		
 		switch(option) {
@@ -385,7 +385,7 @@ public class FeedDataContentProvider extends ContentProvider {
 	}
 
 	@Override
-	public Uri insert(Uri uri, ContentValues values) {
+	public Uri insert(@NonNull Uri uri, ContentValues values) {
 		long newId = -1;
 		
 		int option = URI_MATCHER.match(uri);
@@ -403,7 +403,7 @@ public class FeedDataContentProvider extends ContentProvider {
 				}
 				cursor.close();
 				newId = database.insert(TABLE_FEEDS, null, values);
-				OPML.exportToFile(BACKUPOPML, database);
+                exportOpml(database);
 				break;
 			}
 			case URI_ENTRIES : {
@@ -432,14 +432,14 @@ public class FeedDataContentProvider extends ContentProvider {
 			
 			folder.mkdir(); // maybe we use the boolean return value later
 		} catch (Exception e) {
-			
+			// FIXME report the error
 		}
 		databaseHelper = new DatabaseHelper(getContext(), DATABASE_NAME, DATABASE_VERSION);
 		return true;
 	}
 
 	@Override
-	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+	public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
 		SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
 		
 		int option = URI_MATCHER.match(uri);
@@ -494,7 +494,7 @@ public class FeedDataContentProvider extends ContentProvider {
 	}
 
 	@Override
-	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+	public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		int option = URI_MATCHER.match(uri);
 		
 		String table = null;
@@ -573,12 +573,16 @@ public class FeedDataContentProvider extends ContentProvider {
 		int count = database.update(table, values, where.toString(), selectionArgs);
 		
 		if (table == TABLE_FEEDS && (values.containsKey(FeedData.FeedColumns.NAME) || values.containsKey(FeedData.FeedColumns.URL) || values.containsKey(FeedData.FeedColumns.PRIORITY))) { // == is ok here
-			OPML.exportToFile(BACKUPOPML, database);
+            exportOpml(database);
 		}
 		if (count > 0) {
 			getContext().getContentResolver().notifyChange(uri, null);
 		}
 		return count;
 	}
+
+    private static void exportOpml(SQLiteDatabase database) {
+        OPML.exportToFile(BACKUPOPML, database);
+    }
 
 }

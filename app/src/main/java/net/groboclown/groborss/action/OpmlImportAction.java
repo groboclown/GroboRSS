@@ -1,4 +1,4 @@
-/**
+/*
  * GroboRSS
  *
  * Copyright (c) 2017 Groboclown
@@ -40,8 +40,7 @@ import net.groboclown.groborss.provider.OPML;
 
 public class OpmlImportAction {
     public static void importOpml(final Activity source) {
-        // TODO allow for browsing the files, or at the very least
-        // show the actual path.
+        // TODO allow for browsing the files, or at the very least show the actual path.
         // TODO allow for importing the OPML from a URL.
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) ||Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(source);
