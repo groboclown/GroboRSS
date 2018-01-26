@@ -27,6 +27,8 @@
 package net.groboclown.groborss;
 
 
+import java.io.ByteArrayOutputStream;
+
 public class BASE64 {
 	private static char[] TOCHAR = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 									'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
@@ -87,4 +89,44 @@ public class BASE64 {
 		return result;
 	}
 
+	private static final int INDEX_A = 0;
+	private static final int INDEX_a = 26;
+	private static final int INDEX_0 = 52;
+	private static final int INDEX_PLUS = 62;
+	private static final int INDEX_SLASH = 63;
+
+	public static byte[] decode(char[] encoded) {
+		ByteArrayOutputStream out = new ByteArrayOutputStream(encoded.length);
+		int bits = 0;
+		int acc = 0;
+		for (int i = 0; i < encoded.length; i++) {
+			char c = encoded[i];
+			int val;
+			if (c >= 'A' && c <= 'Z') {
+				val = c - 'A' + INDEX_A;
+			} else if (c >= 'a' && c <= 'z') {
+				val = c - 'a' + INDEX_a;
+			} else if (c >= '0' && c <= '9') {
+				val = c - '0' + INDEX_0;
+			} else if (c == '+' || c == '-') { // url variant
+				val = INDEX_PLUS;
+			} else if (c == '/' || c == '_') { // url variant
+				val = INDEX_SLASH;
+			} else if (c == '=') {
+				// EOL
+				break;
+			} else {
+				throw new IllegalArgumentException("Invalid character " + c);
+			}
+
+			acc = (acc << 6) + val;
+			bits += 6;
+			if (bits >= 8) {
+                bits -= 8;
+                out.write((acc >>> bits) & 0xff);
+                acc &= (1 << bits) - 1;
+            }
+		}
+		return out.toByteArray();
+	}
 }

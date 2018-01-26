@@ -42,7 +42,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.groboclown.groborss.provider.FeedData.TABLES;
+import static net.groboclown.groborss.provider.FeedData.getDbTables;
 import static net.groboclown.groborss.provider.FeedData.TYPE_BLOB;
 import static net.groboclown.groborss.provider.FeedData.TYPE_BOOLEAN;
 import static net.groboclown.groborss.provider.FeedData.TYPE_DATETIME;
@@ -121,10 +121,19 @@ public class JsonStateTest {
     }
 
     @Test
+    public void verifyJson_nullBytes()
+            throws Exception {
+        String json = "{\"every\":{\"rows\":["
+                + "{\"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": null}"
+                + "]}}";
+        jsonState.verifyJson(new JSONObject(json), new DbTable[] { EVERY_TYPE_TABLE });
+    }
+
+    @Test
     public void verifyJson_noData()
             throws Exception {
         String json = "{\"feeds\":{\"rows\":[]},\"entries\":{\"rows\":[]}}";
-        jsonState.verifyJson(new JSONObject(json), TABLES);
+        jsonState.verifyJson(new JSONObject(json), getDbTables());
     }
 
     @Test
@@ -132,7 +141,7 @@ public class JsonStateTest {
             throws Exception {
         String json = "{\"entries\":{\"rows\":[]}}";
         try {
-            jsonState.verifyJson(new JSONObject(json), TABLES);
+            jsonState.verifyJson(new JSONObject(json), getDbTables());
             fail("Did not throw exception");
         } catch (IOException e) {
             assertThat(
@@ -147,7 +156,7 @@ public class JsonStateTest {
             throws Exception {
         String json = "{\"entries\":{\"rows\":[]},\"feeds\":1}";
         try {
-            jsonState.verifyJson(new JSONObject(json), TABLES);
+            jsonState.verifyJson(new JSONObject(json), getDbTables());
             fail("Did not throw exception");
         } catch (IOException e) {
             assertThat(
@@ -162,7 +171,7 @@ public class JsonStateTest {
             throws Exception {
         String json = "{\"entries\":{\"rows\":[]},\"feeds\":{}}";
         try {
-            jsonState.verifyJson(new JSONObject(json), TABLES);
+            jsonState.verifyJson(new JSONObject(json), getDbTables());
             fail("Did not throw exception");
         } catch (IOException e) {
             assertThat(
@@ -177,7 +186,7 @@ public class JsonStateTest {
             throws Exception {
         String json = "{\"entries\":{\"rows\":[]}},\"feeds\":{\"rows\":1}}";
         try {
-            jsonState.verifyJson(new JSONObject(json), TABLES);
+            jsonState.verifyJson(new JSONObject(json), getDbTables());
             fail("Did not throw exception");
         } catch (IOException e) {
             assertThat(
@@ -251,7 +260,18 @@ public class JsonStateTest {
         when(mockQuery.getInt(4)).thenReturn(2); // i2
         when(mockQuery.getInt(5)).thenReturn(0); // z
         when(mockQuery.getLong(6)).thenReturn(100012002L); // d
-        when(mockQuery.getBlob(7)).thenReturn(new byte[] { 1, 2, 3, 4 }); // b
+        when(mockQuery.getBlob(7)).then(new Answer<byte[]>() { // b
+            int count = 0;
+            @Override
+            public byte[] answer(InvocationOnMock invocation)
+                    throws Throwable {
+                count++;
+                if (count <= 1) {
+                    return null;
+                }
+                return new byte[] { 1, 2, 3, 4 };
+            }
+        });
         when(mockSql.query(
                 EVERY_TYPE_TABLE.getTableName(), EVERY_TYPE_TABLE.getColumnNames(),
                 null, null, null, null, null))
@@ -264,7 +284,7 @@ public class JsonStateTest {
 
         assertThat(json.toString(), is("{\"rows\":["
                 // cursor runs 3 times.
-                + "{\"t1\":a,\"t2\":b,\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":[1,2,3,4]},"
+                + "{\"t1\":a,\"t2\":b,\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":null},"
                 + "{\"t1\":a,\"t2\":b,\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":[1,2,3,4]},"
                 + "{\"t1\":a,\"t2\":b,\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":[1,2,3,4]}]}"));
     }

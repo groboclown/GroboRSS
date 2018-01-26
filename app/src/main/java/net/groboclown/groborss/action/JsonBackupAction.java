@@ -22,7 +22,7 @@ public class JsonBackupAction {
             try {
                 String filename = Environment.getExternalStorageDirectory().toString() + "/grobo_rss_" + System.currentTimeMillis() + ".json";
 
-                JsonState.writeJsonFile(filename, FeedData.getActivityFactory(source), FeedData.TABLES);
+                JsonState.writeJsonFile(filename, FeedData.getActivityFactory(source), FeedData.getDbTables());
                 Toast.makeText(source, String.format(source.getString(R.string.message_exportedto), filename), Toast.LENGTH_LONG).show();
             } catch (Exception e) {
                 source.showDialog(DIALOG_ERROR_FEEDEXPORT);

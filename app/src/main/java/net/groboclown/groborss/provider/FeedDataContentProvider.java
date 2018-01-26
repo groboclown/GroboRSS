@@ -45,10 +45,9 @@ import android.text.TextUtils;
 
 import net.groboclown.groborss.Strings;
 
-import static net.groboclown.groborss.provider.FeedData.DB_TABLE_ENTRIES;
-import static net.groboclown.groborss.provider.FeedData.DB_TABLE_FEEDS;
 import static net.groboclown.groborss.provider.FeedData.TABLE_ENTRIES;
 import static net.groboclown.groborss.provider.FeedData.TABLE_FEEDS;
+import static net.groboclown.groborss.provider.FeedData.getDbTables;
 
 public class FeedDataContentProvider extends ContentProvider {
 	private static final String FOLDER = Environment.getExternalStorageDirectory()+"/groborss/";
@@ -111,9 +110,10 @@ public class FeedDataContentProvider extends ContentProvider {
 
 		@Override
 		public void onCreate(SQLiteDatabase database) {
-			database.execSQL(createTable(DB_TABLE_FEEDS));
-			database.execSQL(createTable(DB_TABLE_ENTRIES));
-			
+		    for (DbTable table: getDbTables()) {
+                database.execSQL(createTable(table));
+            }
+
 			File backupFile = new File(BACKUPOPML);
 			
 			if (backupFile.exists()) {

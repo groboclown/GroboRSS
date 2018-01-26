@@ -64,10 +64,6 @@ public class FeedData {
 	static final String TABLE_ENTRIES = "entries";
 
 
-	static final DbTable DB_TABLE_FEEDS = new FeedColumns();
-	static final DbTable DB_TABLE_ENTRIES = new EntryColumns();
-	public static final DbTable[] TABLES = { DB_TABLE_FEEDS, DB_TABLE_ENTRIES };
-
 
 	public static class FeedColumns extends DbTable implements BaseColumns {
 		public static final Uri CONTENT_URI = parseUri(CONTENT + AUTHORITY + "/feeds");
@@ -116,7 +112,7 @@ public class FeedData {
 			return parseUri(CONTENT + AUTHORITY + "/feeds/" + feedId);
 		}
 	}
-	
+
 	public static class EntryColumns extends DbTable implements BaseColumns {
 		public static final String FEED_ID = "feedid";
 		
@@ -163,11 +159,25 @@ public class FeedData {
 		public static Uri PARENT_URI(String path) {
 			return parseUri(CONTENT + AUTHORITY + path.substring(0, path.lastIndexOf('/')));
 		}
-		
 	}
 
+    private static DbTable DB_TABLE_FEEDS = null;
+    private static DbTable DB_TABLE_ENTRIES = null;
 
-	public static DbTableFacadeFactory getActivityFactory(@NonNull Activity source) {
+    public static DbTable[] getDbTables() {
+        // The table static values can potentially be uninitialized when this
+        // static class' static initializer runs.  Therefore, we delay initialization.
+        if (DB_TABLE_ENTRIES == null) {
+            DB_TABLE_ENTRIES = new EntryColumns();
+        }
+        if (DB_TABLE_FEEDS == null) {
+            DB_TABLE_FEEDS = new FeedColumns();
+        }
+        // declare a reference to the static values to ensure they are initialized.
+        return new DbTable[] { DB_TABLE_FEEDS, DB_TABLE_ENTRIES };
+    }
+
+    public static DbTableFacadeFactory getActivityFactory(@NonNull Activity source) {
 		return new DbTableFacadeFactory.ContextFactory(source,
 				TABLE_FEEDS, FeedColumns.CONTENT_URI,
 				TABLE_ENTRIES, EntryColumns.CONTENT_URI);

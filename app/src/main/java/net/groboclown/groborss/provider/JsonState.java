@@ -29,6 +29,8 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 
+import net.groboclown.groborss.BASE64;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -173,15 +175,16 @@ public class JsonState {
     JSONStringer toJson(@NonNull DbTableFacadeFactory dbFactory,
             @NonNull DbTable[] tables)
             throws JSONException {
-        JSONStringer json = new JSONStringer();
+        JSONStringer json = new JSONStringer().object();
 
         for (int i = 0; i < tables.length; i++) {
-            json = json.key(tables[i].getTableName());
-            json = json.value(writeJsonTable(json.object(), dbFactory.get(tables[i].getTableName()),
-                    tables[i]).endObject());
+            json.key(tables[i].getTableName());
+            json.object();
+            writeJsonTable(json, dbFactory.get(tables[i].getTableName()), tables[i])
+                    .endObject();
         }
 
-        return json;
+        return json.endObject();
     }
 
 
@@ -209,6 +212,8 @@ public class JsonState {
                 }
                 json.endObject();
             }
+        } catch (Throwable e) {
+            throw e;
         } finally {
             if (cursor != null) {
                 cursor.close();
@@ -240,11 +245,17 @@ public class JsonState {
         }
         if (TYPE_BLOB.equals(type)) {
             byte[] bytes = cursor.getBlob(index);
+            if (bytes == null) {
+                return obj.value(null);
+            }
+            /*
             obj.array();
             for (int i = 0; i < bytes.length; i++) {
                 obj.value(bytes[i]);
             }
             return obj.endArray();
+            */
+            return obj.value(BASE64.encode(bytes));
         }
         throw new IllegalArgumentException("Unknown column type " + type);
     }
@@ -269,11 +280,24 @@ public class JsonState {
             return;
         }
         if (TYPE_BLOB.equals(type)) {
-            JSONArray ar = json.getJSONArray(columnName);
-            byte[] bytes = new byte[ar.length()];
-            for (int i = 0; i < bytes.length; i++) {
-                bytes[i] = (byte) ar.getInt(i);
+            String encoded = json.getString(columnName);
+            final byte[] bytes;
+            if (encoded == null) {
+                bytes = null;
+            } else {
+                bytes = BASE64.decode(encoded.toCharArray());
             }
+            /*
+            JSONArray ar = json.getJSONArray(columnName);
+            if (ar == null) {
+                bytes = null;
+            } else {
+                bytes = new byte[ar.length()];
+                for (int i = 0; i < bytes.length; i++) {
+                    bytes[i] = (byte) ar.getInt(i);
+                }
+            }
+            */
             values.put(columnName, bytes);
             return;
         }

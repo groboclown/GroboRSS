@@ -40,7 +40,7 @@ public class JsonRestoreAction {
                             JsonState.readJsonFile(
                                     Environment.getExternalStorageDirectory().toString() + File.separator + fileNames[which],
                                     FeedData.getActivityFactory(source),
-                                    FeedData.TABLES);
+                                    FeedData.getDbTables());
                         } catch (Exception e) {
                             source.showDialog(RSSOverview.DIALOG_ERROR_FEEDIMPORT);
                         }
