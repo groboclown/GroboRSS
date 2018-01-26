@@ -2,6 +2,11 @@ language: java
 
 dist: trusty
 
+before_install:
+  # Ensure gradlew has execute permissions.  Should be done through
+  # git index, but this is just to be sure.
+  - chmod +x gradlew
+
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
