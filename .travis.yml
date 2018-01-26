@@ -1,13 +1,21 @@
-language: java
+language: android
+jdk: oraclejdk8
 
-dist: trusty
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-25.0.0
+    - android-25
+    - extra-android-m2repository
 
-before_install:
+before_script:
   # Ensure gradlew has execute permissions.  Should be done through
   # git index, but this is just to be sure.
   - chmod +x ./gradlew
-  # For debugging
-  - ls -lA .
+  - export ANDROID_HOME=$HOME/.android
+  - mkdir -p $HOME/.android
+  - cp -r extra/licenses $ANDROID_HOME/licenses
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -18,12 +26,5 @@ cache:
     - $HOME/.gradle/caches
     - $HOME/.gradle/wrapper
 
-jdk:
-  - oraclejdk8
-
-sudo: false
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer
-      - oracle-java8-set-default
+script:
+  - ./gradlew clean test assemble
