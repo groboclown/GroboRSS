@@ -1,4 +1,4 @@
-/**
+/*
  * GroboRSS
  *
  * Copyright (c) 2017 Groboclown
