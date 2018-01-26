@@ -56,7 +56,7 @@ class Util {
             return "null";
         }
         if (value instanceof String) {
-            return (String) value;
+            return JSONObject.quote((String) value);
         }
         if (value instanceof Number) {
             // not all Numbers may match actual JSON Numbers. i.e. Fractions or Complex

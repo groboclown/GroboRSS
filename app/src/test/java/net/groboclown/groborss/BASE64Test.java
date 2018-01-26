@@ -38,6 +38,14 @@ public class BASE64Test {
     }
 
     @Test
+    public void encode_binary() {
+        assertThat(
+                BASE64.encode(new byte[] { 1, 2, 3, 4 }),
+                is("AQIDBA==")
+        );
+    }
+
+    @Test
     public void decode_empty() {
         assertThat(BASE64.decode(new char[0]),
                 is(new byte[0]));
@@ -59,5 +67,21 @@ public class BASE64Test {
     public void decode_4() {
         assertThat(BASE64.decode("YWJjZA==".toCharArray()),
                 is(new byte[]{ 'a', 'b', 'c', 'd' }));
+    }
+
+    @Test
+    public void decode_binary() {
+        assertThat(
+                BASE64.decode("AQIDBA==".toCharArray()),
+                is(new byte[] { 1, 2, 3, 4 })
+        );
+    }
+
+    @Test
+    public void decode_ignoreWhitespace() {
+        assertThat(
+                BASE64.decode("A\tQ I\nD\rBA==".toCharArray()),
+                is(new byte[] { 1, 2, 3, 4 })
+        );
     }
 }

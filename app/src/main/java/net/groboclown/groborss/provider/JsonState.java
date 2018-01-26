@@ -83,6 +83,7 @@ public class JsonState {
         while ((len = reader.read(buf, 0, 4096)) > 0) {
             read.write(buf, 0, len);
         }
+        reader.close();
         readJson(read.toString(), dbFactory, tables);
     }
 
@@ -168,29 +169,27 @@ public class JsonState {
     public void writeJson(@NonNull Writer writer, @NonNull DbTableFacadeFactory dbFactory,
             @NonNull DbTable[] tables)
             throws JSONException, IOException {
-        writer.write(toJson(dbFactory, tables).toString());
-    }
 
+        // In order to conserve memory, we'll do the simple JSON writing ourselves.  It's the
+        // individual row data that'll be JSON.
 
-    JSONStringer toJson(@NonNull DbTableFacadeFactory dbFactory,
-            @NonNull DbTable[] tables)
-            throws JSONException {
-        JSONStringer json = new JSONStringer().object();
+        writer.write('{');
 
         for (int i = 0; i < tables.length; i++) {
-            json.key(tables[i].getTableName());
-            json.object();
-            writeJsonTable(json, dbFactory.get(tables[i].getTableName()), tables[i])
-                    .endObject();
+            writer.write(
+                    '"' + tables[i].getTableName().replace("\"", "\\") + "\":");
+            writeJsonTable(writer, dbFactory.get(tables[i].getTableName()), tables[i]);
         }
 
-        return json.endObject();
+        writer.write('}');
+        writer.flush();
+        writer.close();
     }
 
 
-    JSONStringer writeJsonTable(
-            JSONStringer json, DbTableFacade db, DbTable table)
-            throws JSONException {
+    void writeJsonTable(
+            @NonNull Writer writer, DbTableFacade db, DbTable table)
+            throws JSONException, IOException {
         Cursor cursor = db.query(table.getColumnNames(), null, null, null);
 
         // Map the queried column result indicies to the data types.
@@ -202,24 +201,28 @@ public class JsonState {
             columnTypes[index] = table.getColumnType(i);
         }
 
-        json.key("rows");
-        json.array();
+        writer.write("{\"rows\":[");
         try {
+            boolean first = true;
             while (cursor != null && cursor.moveToNext()) {
-                json.object();
+                if (first) {
+                    first = false;
+                } else {
+                    writer.write(',');
+                }
+                JSONStringer json = new JSONStringer().object();
                 for (int index = 0; index < table.getColumnCount(); index++) {
                     writeJsonColumn(json, cursor, index, columnNames[index], columnTypes[index]);
                 }
                 json.endObject();
+                writer.write(json.toString());
             }
-        } catch (Throwable e) {
-            throw e;
+            writer.write("]}");
         } finally {
             if (cursor != null) {
                 cursor.close();
             }
         }
-        return json.endArray();
     }
 
     private JSONStringer writeJsonColumn(

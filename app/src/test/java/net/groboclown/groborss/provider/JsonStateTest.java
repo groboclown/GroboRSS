@@ -31,7 +31,6 @@ import android.database.sqlite.SQLiteDatabase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONStringer;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -39,6 +38,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,7 +84,7 @@ public class JsonStateTest {
     public void readJsonReader()
             throws Exception {
         String json = "{\"every\":{\"rows\":["
-                + "{\"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": [1,2,3,4]}"
+                + "{\"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": \"AQIDBA==\"}"
                 + "]}}";
         StringReader r = new StringReader(json);
         SQLiteDatabase mockSql = mock(SQLiteDatabase.class);
@@ -115,7 +115,7 @@ public class JsonStateTest {
     public void verifyJson_rowData()
             throws Exception {
         String json = "{\"every\":{\"rows\":["
-                + "{\"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": [1,2,3,4]}"
+                + "{\"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": \"AQIDBA==\"}"
                 + "]}}";
         jsonState.verifyJson(new JSONObject(json), new DbTable[] { EVERY_TYPE_TABLE });
     }
@@ -200,7 +200,7 @@ public class JsonStateTest {
     public void verifyJson_missingColumn()
             throws Exception {
         String json = "{\"every\":{\"rows\":["
-                + "{\"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": [1,2,3,4]}"
+                + "{\"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": \"AQIDBA==\"}"
                 + "]}}";
         try {
             jsonState.verifyJson(new JSONObject(json), new DbTable[]{EVERY_TYPE_TABLE});
@@ -217,7 +217,7 @@ public class JsonStateTest {
     public void verifyJson_extraColumn()
             throws Exception {
         String json = "{\"every\":{\"rows\":["
-                + "{\"a\": 1, \"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": [1,2,3,4]}"
+                + "{\"a\": 1, \"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": \"AQIDBA==\"}"
                 + "]}}";
         try {
             jsonState.verifyJson(new JSONObject(json), new DbTable[] { EVERY_TYPE_TABLE });
@@ -237,7 +237,7 @@ public class JsonStateTest {
 
     @Test
     public void writeJsonTable()
-            throws JSONException {
+            throws JSONException, IOException {
         SQLiteDatabase mockSql = mock(SQLiteDatabase.class);
         Cursor mockQuery = mock(Cursor.class);
         for (int i = 0; i < EVERY_TYPE_TABLE.getColumnCount(); i++) {
@@ -252,7 +252,7 @@ public class JsonStateTest {
             }
         };
         when(mockQuery.moveToNext()).then(moveToNextAnswer);
-        // + "{\"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": [1,2,3,4]}"
+        // + "{\"t1\": \"a\", \"t2\": \"b\", \"i1\": 1, \"i2\": 2, \"z\": 0, \"d\": 100012002, \"b\": \"AQIDBA==\"}"
         // index 0 == primary key
         when(mockQuery.getString(1)).thenReturn("a"); // t1
         when(mockQuery.getString(2)).thenReturn("b"); // t2
@@ -278,20 +278,19 @@ public class JsonStateTest {
             .thenReturn(mockQuery);
         DbTableFacade db = new DbTableFacade.SQLiteFacade(mockSql, EVERY_TYPE_TABLE.getTableName());
 
-        JSONStringer json = new JSONStringer();
-        jsonState.writeJsonTable(json.object(), db, EVERY_TYPE_TABLE);
-        json.endObject();
+        StringWriter out = new StringWriter();
+        jsonState.writeJsonTable(out, db, EVERY_TYPE_TABLE);
 
-        assertThat(json.toString(), is("{\"rows\":["
+        assertThat(out.toString(), is("{\"rows\":["
                 // cursor runs 3 times.
-                + "{\"t1\":a,\"t2\":b,\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":null},"
-                + "{\"t1\":a,\"t2\":b,\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":[1,2,3,4]},"
-                + "{\"t1\":a,\"t2\":b,\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":[1,2,3,4]}]}"));
+                + "{\"t1\":\"a\",\"t2\":\"b\",\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":null},"
+                + "{\"t1\":\"a\",\"t2\":\"b\",\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":\"AQIDBA==\"},"
+                + "{\"t1\":\"a\",\"t2\":\"b\",\"i1\":1,\"i2\":2,\"z\":0,\"d\":100012002,\"b\":\"AQIDBA==\"}]}"));
     }
 
     @Test
     public void writeJsonTable_noRows()
-            throws JSONException {
+            throws JSONException, IOException {
         SQLiteDatabase mockSql = mock(SQLiteDatabase.class);
         Cursor mockQuery = mock(Cursor.class);
         for (int i = 0; i < EVERY_TYPE_TABLE.getColumnCount(); i++) {
@@ -304,11 +303,10 @@ public class JsonStateTest {
                 .thenReturn(mockQuery);
         DbTableFacade db = new DbTableFacade.SQLiteFacade(mockSql, EVERY_TYPE_TABLE.getTableName());
 
-        JSONStringer json = new JSONStringer();
-        jsonState.writeJsonTable(json.object(), db, EVERY_TYPE_TABLE);
-        json.endObject();
+        StringWriter out = new StringWriter();
+        jsonState.writeJsonTable(out, db, EVERY_TYPE_TABLE);
 
-        assertThat(json.toString(), is("{\"rows\":[]}"));
+        assertThat(out.toString(), is("{\"rows\":[]}"));
     }
 
 

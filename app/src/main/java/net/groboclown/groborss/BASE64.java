@@ -115,6 +115,8 @@ public class BASE64 {
 			} else if (c == '=') {
 				// EOL
 				break;
+			} else if (Character.isWhitespace(c)) {
+				continue;
 			} else {
 				throw new IllegalArgumentException("Invalid character " + c);
 			}
