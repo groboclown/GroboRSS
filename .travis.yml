@@ -14,8 +14,6 @@ before_script:
   # git index, but this is just to be sure.
   - chmod +x ./gradlew
   - export ANDROID_HOME=$HOME/.android
-  - mkdir -p $HOME/.android
-  - cp -r extra/licenses $ANDROID_HOME/licenses
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
