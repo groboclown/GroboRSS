@@ -108,7 +108,7 @@ public class JsonState {
             ContentValues[] valuesList = new ContentValues[rows.length()];
             for (int i = 0; i < rows.length(); i++) {
                 valuesList[i] = createContentValues();
-                pullRowDataFromJson(valuesList[i], rows.getJSONObject(i), tables[i]);
+                pullRowDataFromJson(valuesList[i], rows.getJSONObject(i), tables[t]);
             }
             db.bulkInsert(valuesList);
         }
@@ -176,6 +176,9 @@ public class JsonState {
         writer.write('{');
 
         for (int i = 0; i < tables.length; i++) {
+            if (i > 0) {
+                writer.write(',');
+            }
             writer.write(
                     '"' + tables[i].getTableName().replace("\"", "\\") + "\":");
             writeJsonTable(writer, dbFactory.get(tables[i].getTableName()), tables[i]);
@@ -271,15 +274,29 @@ public class JsonState {
             return;
         }
         if (TYPE_TEXT.equals(type) || TYPE_TEXT_UNIQUE.equals(type)) {
-            values.put(columnName, json.getString(columnName));
+            final String value;
+            if (json.has(columnName)) {
+                value = json.getString(columnName);
+            } else {
+                value = null;
+            }
+            values.put(columnName, value);
             return;
         }
         if (TYPE_INT.equals(type) || TYPE_INT_7.equals(type) || TYPE_BOOLEAN.equals(type)) {
-            values.put(columnName, json.getInt(columnName));
+            if (json.has(columnName) && ! json.isNull(columnName)) {
+                values.put(columnName, json.getInt(columnName));
+            } else {
+                values.put(columnName, (String)null);
+            }
             return;
         }
         if (TYPE_DATETIME.equals(type)) {
-            values.put(columnName, json.getLong(columnName));
+            if (json.has(columnName) && !json.isNull(columnName)) {
+                values.put(columnName, json.getLong(columnName));
+            } else {
+                values.put(columnName, (String)null);
+            }
             return;
         }
         if (TYPE_BLOB.equals(type)) {

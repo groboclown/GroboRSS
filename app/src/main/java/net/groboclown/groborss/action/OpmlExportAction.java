@@ -27,6 +27,7 @@ package net.groboclown.groborss.action;
 
 import android.app.Activity;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Toast;
 
 import net.groboclown.groborss.R;
@@ -36,6 +37,8 @@ import static net.groboclown.groborss.RSSOverview.DIALOG_ERROR_EXTERNALSTORAGENO
 import static net.groboclown.groborss.RSSOverview.DIALOG_ERROR_FEEDEXPORT;
 
 public class OpmlExportAction {
+    private static final String TAG = "OpmlExportAction";
+
     public static void exportOpml(Activity activity) {
         // TODO allow selecting an output directory and name.
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) ||Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
@@ -46,6 +49,7 @@ public class OpmlExportAction {
                 Toast
                         .makeText(activity, String.format(activity.getString(R.string.message_exportedto), filename), Toast.LENGTH_LONG).show();
             } catch (Exception e) {
+                Log.d(TAG, "Failed to export opml file", e);
                 activity.showDialog(DIALOG_ERROR_FEEDEXPORT);
             }
         } else {

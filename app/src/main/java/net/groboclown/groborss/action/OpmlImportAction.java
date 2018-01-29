@@ -29,6 +29,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.os.Environment;
+import android.util.Log;
 
 import net.groboclown.groborss.R;
 
@@ -39,6 +40,8 @@ import net.groboclown.groborss.RSSOverview;
 import net.groboclown.groborss.provider.OPML;
 
 public class OpmlImportAction {
+    private static final String TAG = "OpmlImportAction";
+
     public static void importOpml(final Activity source) {
         // TODO allow for browsing the files, or at the very least show the actual path.
         // TODO allow for importing the OPML from a URL.
@@ -58,12 +61,14 @@ public class OpmlImportAction {
                         try {
                             OPML.importFromFile(Environment.getExternalStorageDirectory().toString() + File.separator + fileNames[which], source);
                         } catch (Exception e) {
+                            Log.d(TAG, "Failed to import opml file", e);
                             source.showDialog(RSSOverview.DIALOG_ERROR_FEEDIMPORT);
                         }
                     }
                 });
                 builder.show();
             } catch (Exception e) {
+                Log.i(TAG, "Failed to import opml file", e);
                 source.showDialog(RSSOverview.DIALOG_ERROR_FEEDIMPORT);
             }
         } else {

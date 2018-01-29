@@ -28,6 +28,7 @@ package net.groboclown.groborss.action;
 import android.app.Activity;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.widget.Toast;
 
 import net.groboclown.groborss.R;
@@ -41,6 +42,8 @@ import static net.groboclown.groborss.RSSOverview.DIALOG_ERROR_FEEDEXPORT;
  * Backup the state of the database to a JSON file.
  */
 public class JsonBackupAction {
+    private static final String TAG = "JsonBackupAction";
+
     public static void backupJson(@NonNull Activity source) {
         // TODO allow selecting an output directory and name.
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED) ||Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED_READ_ONLY)) {
@@ -50,6 +53,7 @@ public class JsonBackupAction {
                 JsonState.writeJsonFile(filename, FeedData.getActivityFactory(source), FeedData.getDbTables());
                 Toast.makeText(source, String.format(source.getString(R.string.message_exportedto), filename), Toast.LENGTH_LONG).show();
             } catch (Exception e) {
+                Log.d(TAG, "Failed to export json file", e);
                 source.showDialog(DIALOG_ERROR_FEEDEXPORT);
             }
         } else {

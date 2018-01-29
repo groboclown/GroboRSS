@@ -43,6 +43,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.util.Log;
 
 import net.groboclown.groborss.Strings;
 
@@ -51,6 +52,8 @@ import static net.groboclown.groborss.provider.FeedData.TABLE_FEEDS;
 import static net.groboclown.groborss.provider.FeedData.getDbTables;
 
 public class FeedDataContentProvider extends ContentProvider {
+	private static final String TAG = "FeedDataContentProvider";
+
 	private static final String FOLDER = Environment.getExternalStorageDirectory()+"/groborss/";
 
 	private static final String DATABASE_NAME = "groborss.db";
@@ -132,7 +135,7 @@ public class FeedDataContentProvider extends ContentProvider {
 				if (n > 0) {
 					stringBuilder.append(", ");
 				}
-				stringBuilder.append(table.getColumnName(i)).append(' ').append(table.getColumnType(i));
+				stringBuilder.append(table.getColumnName(n)).append(' ').append(table.getColumnType(n));
 			}
 			return stringBuilder.append(");").toString();
 		}
@@ -196,7 +199,7 @@ public class FeedDataContentProvider extends ContentProvider {
 			try {
 				database.execSQL(query);
 			} catch (Exception e) {
-				// FIXME report error
+				Log.i(TAG, "SQL Error", e);
 			}
 		}
 
@@ -271,8 +274,8 @@ public class FeedDataContentProvider extends ContentProvider {
 					newDatabase.endTransaction();
                     exportOpml(newDatabase);
 				} catch (Exception e) {
-					// FIXME report the error
-				}
+                    Log.i(TAG, "Failed to get the database", e);
+                }
 				return newDatabase;
 			} else {
 				return super.getWritableDatabase();
@@ -431,10 +434,12 @@ public class FeedDataContentProvider extends ContentProvider {
 		try {
 			File folder = new File(FOLDER);
 			
-			folder.mkdir(); // maybe we use the boolean return value later
+			if (!folder.mkdir()) {
+                Log.i(TAG, "Failed to create the work folder " + FOLDER);
+            }
 		} catch (Exception e) {
-			// FIXME report the error
-		}
+            Log.i(TAG, "Failed to create the folder", e);
+        }
 		databaseHelper = new DatabaseHelper(getContext(), DATABASE_NAME, DATABASE_VERSION);
 		return true;
 	}

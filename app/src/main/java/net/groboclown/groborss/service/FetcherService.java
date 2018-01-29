@@ -385,6 +385,8 @@ public class FetcherService extends IntentService {
 					case FETCHMODE_DIRECT: {
                         String encoding = connection.getEncodingCharset(true);
                         if (encoding != null) {
+                        	// FIXME getting an error in the form BufferedInputStream is closed
+							// from setInputStream().
                             InputStream inputStream = connection.getAsInputStream();
                             handler.setInputStream(inputStream);
                             try {
