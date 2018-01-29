@@ -3,13 +3,16 @@
 Please see the [changes][CHANGES.md] list for full details on new options.
 Documentation and screenshots should be coming soon.
 
-Based on *Sparse rss* Copyright (c) 2010-2012 Stefan Handschuh
+Based on *Sparse rss* Copyright (c) 2010-2012 Stefan Handschuh.  This program would not be
+possible without his work.
 
 
 ## Features
 
 * Import and Export OPML 
-
+* Web Bug removal
+* Alt-Text for Images display
+* Backup and restore state from JSON files.
 
 
 ## About the Code

@@ -8,6 +8,7 @@
 * Forked from Sparse rss version 1.7, with `doits` patches.
 * Migrated to modern Android development environment.
 * Enhanced feed entry viewing.
+* Added export and import from json.
 * Overview enhancements.
 * Feed view enhancements.
 * Bug fixes.
@@ -42,6 +43,9 @@
         *view image in its own tab*.  From here, you can copy the URL for the image, paste
         it into the feed options, and edit it to create an appropriate Regular Expression.
         The scope of this is beyond this document.
+* Added export and import from json.
+    * New top level menu items, "Restore from JSON" and "Backup to JSON".
+    * Allows for more thorough archiving of the state of the application than what OPML provides. 
 * Overview enhancements.
     * Made the "refresh" button first on the list.
 * Feed view enhancements.
@@ -55,3 +59,11 @@
         old conversions would not keep the URL correctly, or sometimes aggressively
         wrap URLs in links when they are already in links.
     * Preferences now have more descriptive names for the enable/disable options.
+
+### Known Issues and Limitations
+
+* Some feeds entries that are incorrectly parsed and incorrectly strip the end text.
+* Feed entries may contain editorial sections (such as `[I]`) which are incorrectly parsed
+  as BBCode.  Many of these situations are handled, but a few can slip by.
+* OPML and JSON file import / export do not support a full-featured file management.  Instead,
+  they save and load only from the root of the SD Card directory.
